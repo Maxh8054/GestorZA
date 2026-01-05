@@ -36,6 +36,10 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            /* Impedir zoom no mobile */
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            touch-action: manipulation;
         }
 
         body {
@@ -44,9 +48,11 @@
             min-height: 100vh;
             color: #333;
             line-height: 1.6;
-            -webkit-text-size-adjust: 100%;
-            -ms-text-size-adjust: 100%;
-            touch-action: manipulation;
+            /* Impedir zoom no mobile */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            overflow-x: hidden;
         }
 
         .login-container {
@@ -154,13 +160,13 @@
         header {
             background: var(--primary-color);
             color: white;
-            padding: 30px 20px;
+            padding: 20px;
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
             margin-bottom: 30px;
             position: relative;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
         }
 
@@ -168,6 +174,7 @@
             display: flex;
             align-items: center;
             gap: 15px;
+            margin-bottom: 15px;
         }
 
         .company-logo {
@@ -189,22 +196,26 @@
 
         header h1 {
             margin: 0;
-            font-size: 2.2rem;
+            font-size: 1.8rem;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
         header p {
-            margin-top: 10px;
-            font-size: 1.1rem;
+            margin-top: 5px;
+            font-size: 1rem;
             opacity: 0.9;
+            text-align: center;
         }
 
         .header-controls {
             display: flex;
             gap: 10px;
             align-items: center;
+            width: 100%;
+            justify-content: space-between;
+            margin-top: 10px;
         }
 
         .user-badge {
@@ -959,7 +970,7 @@
 
         .charts-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            grid-template-columns: 1fr;
             gap: 20px;
             margin-bottom: 30px;
         }
@@ -1146,7 +1157,31 @@
             .charts-grid { grid-template-columns: 1fr; }
             .filter-container { flex-direction: column; align-items: stretch; }
             .filter-container select { max-width: 100%; }
-            .header-controls { position: static; margin-top: 15px; justify-content: center; }
+            
+            .header-logo {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            header h1 {
+                font-size: 1.5rem;
+            }
+            
+            header p {
+                font-size: 0.9rem;
+            }
+            
+            .header-controls {
+                flex-direction: column;
+                width: 100%;
+                gap: 5px;
+            }
+            
+            .user-badge {
+                width: 100%;
+                justify-content: center;
+            }
+            
             .modal-content { width: 95%; margin: 5% auto; }
             
             .card-actions {
@@ -2148,16 +2183,6 @@
                             </div>
                         </h3>
                         <canvas id="statusChart"></canvas>
-                    </div>
-                    <div class="chart-container">
-                        <h3>
-                            <span><i class="fas fa-chart-bar"></i> Produtividade por Funcionário</span>
-                            <div class="chart-actions">
-                                <button onclick="refreshChart('productivity')"><i class="fas fa-sync-alt"></i></button>
-                                <button onclick="downloadChart('productivity')"><i class="fas fa-download"></i></button>
-                            </div>
-                        </h3>
-                        <canvas id="productivityChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -3759,50 +3784,6 @@
             });
         }
 
-        const productivityCtx = document.getElementById('productivityChart');
-        if (productivityCtx) {
-            charts.productivity = new Chart(productivityCtx.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: usuarios.filter(u => u.role === 'funcionario' || u.role === 'gestor').map(f => f.nome.split(' ')[0]),
-                    datasets: [{
-                        label: 'Demandas Concluídas',
-                        data: usuarios.filter(u => u.role === 'funcionario' || u.role === 'gestor').map(f => Math.floor(Math.random() * 20) + 5),
-                        backgroundColor: 'rgba(39, 174, 96, 0.8)',
-                        borderColor: 'rgba(39, 174, 96, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    scales: {
-                        x: { 
-                            beginAtZero: true, 
-                            ticks: { stepSize: 1 },
-                            grid: {
-                                display: false
-                            }
-                        },
-                        y: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    },
-                    plugins: {
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'end',
-                            color: '#333',
-                            font: { weight: 'bold' }
-                        }
-                    }
-                }
-            });
-        }
-
         atualizarGraficos();
     }
 
@@ -3820,11 +3801,6 @@
         ];
         charts.status.data.datasets[0].data = statusData;
         charts.status.update();
-
-        charts.productivity.data.datasets[0].data = usuarios.filter(u => u.role === 'funcionario' || u.role === 'gestor').map(f => 
-            demandasFiltradas.filter(d => (d.funcionarioId === f.id || (d.atribuidos && d.atribuidos.some(a => a.id === f.id))) && d.status === 'aprovada').length
-        );
-        charts.productivity.update();
     }
 
     // Formatar data
@@ -5199,7 +5175,7 @@
                             }
                         }
                     }
-                } else if (demanda.status === 'pendente' || demanda.status === 'finalizado_pendente_aprovacao' || demanda.status === 'reprovada' || demanda.status === 'reprovada_pelo_atribuido') {
+                                } else if (demanda.status === 'pendente' || demanda.status === 'finalizado_pendente_aprovacao' || demanda.status === 'reprovada' || demanda.status === 'reprovada_pelo_atribuido') {
                     ranking[demanda.funcionarioId].andamento++;
                 }
                 
