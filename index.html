@@ -3038,7 +3038,8 @@ function normalizarDadosDemanda(demanda) {
 }
 
 // Modificar a função de importação para garantir que todas as demandas sejam normalizadas
-async function importarDemandas() {
+// Importar demandas
+function importarDemandas() {
     const fileInput = document.getElementById('importFile');
     if (!fileInput.files.length) {
         showNotification('warning', 'Nenhum Arquivo Selecionado', 'Por favor, selecione um arquivo JSON para importar.');
@@ -3056,43 +3057,68 @@ async function importarDemandas() {
                 throw new Error("O arquivo JSON deve conter uma lista de demandas.");
             }
 
-            // Limpa a lista atual de demandas para evitar duplicatas
-            todasDemandas = [];
-            
             // Normaliza cada demanda importada ANTES de qualquer processamento
             const normalizedImportedData = importedData.map(demanda => normalizarDadosDemanda(demanda));
 
+            let updatedCount = 0;
             let addedCount = 0;
             let skippedCount = 0;
 
-            // Adiciona todas as demandas normalizadas
+            // Primeiro, vamos obter as demandas atuais do servidor para garantir que temos a lista mais recente
+            await carregarDadosDoServidor();
+
             for (const demandaImportada of normalizedImportedData) {
-                // Garante que a demanda tenha um ID
-                if (!demandaImportada.id) {
-                    demandaImportada.id = Date.now() + Math.random();
-                }
+                const demandaExistente = todasDemandas.find(d => d.id === demandaImportada.id);
                 
-                // Garante que a demanda tenha uma TAG
-                if (!demandaImportada.tag) {
-                    demandaImportada.tag = `DEM-IMP-${Date.now()}`;
-                }
-                
-                // Salva a demanda no servidor
-                const sucesso = await salvarDemandaNoServidor(demandaImportada);
-                
-                if (sucesso) {
-                    todasDemandas.push(demandaImportada);
-                    addedCount++;
+                if (demandaExistente) {
+                    const dadosAtualizados = {
+                        ...demandaImportada,
+                        id: demandaExistente.id
+                    };
+                    
+                    delete dadosAtualizados.dataCriacao;
+                    
+                    const sucesso = await atualizarDemandaNoServidor(demandaExistente.id, dadosAtualizados);
+                    
+                    if (sucesso) {
+                        updatedCount++;
+                        // Atualizar a demanda localmente
+                        Object.assign(demandaExistente, dadosAtualizados);
+                    } else {
+                        skippedCount++;
+                    }
                 } else {
-                    skippedCount++;
+                    if (!demandaImportada.id) {
+                        demandaImportada.id = Date.now() + Math.random();
+                    }
+                    
+                    if (!demandaImportada.tag) {
+                        demandaImportada.tag = `DEM-IMP-${Date.now()}`;
+                    }
+                    
+                    const sucesso = await salvarDemandaNoServidor(demandaImportada);
+                    
+                    if (sucesso) {
+                        addedCount++;
+                        // Adicionar a demanda localmente
+                        todasDemandas.push(demandaImportada);
+                    } else {
+                        skippedCount++;
+                    }
                 }
             }
 
-            // Atualiza a interface
+            // SUBSTITUA A PARTIR DAQUI
+            await carregarDadosDoServidor();
             renderizarTodasAsAbas();
+            atualizarDashboard(); // Garantir que o dashboard seja atualizado
+            atualizarRanking();
+            atualizarGraficos();
+            atualizarBadges();
             
             let message = `Importação concluída. `;
-            if (addedCount > 0) message += `${addedCount} demanda(s) adicionada(s). `;
+            if (updatedCount > 0) message += `${updatedCount} demanda(s) atualizada(s). `;
+            if (addedCount > 0) message += `${addedCount} nova(s) demanda(s) adicionada(s). `;
             if (skippedCount > 0) message += `${skippedCount} demanda(s) ignorada(s) por erro.`;
             
             showNotification('success', 'Importação Concluída', message);
@@ -3787,8 +3813,7 @@ async function carregarDadosDoServidor() {
     }
 
     // Obter demandas filtradas
-    // Substitua a função getDemandasFiltradasDashboard por esta versão corrigida
-function getDemandasFiltradasDashboard() {
+   function getDemandasFiltradas() {
     let demandasBase;
     
     // Para gestores, mostrar TODAS as demandas do sistema no dashboard
@@ -3803,6 +3828,7 @@ function getDemandasFiltradasDashboard() {
         demandasBase = demandasBase.filter(d => d.funcionarioId == filtroFuncionarioAtual);
     }
     
+    // Corrigir os IDs dos filtros para corresponder ao HTML
     const periodo = document.getElementById('dashboardPeriodoFilter')?.value;
     if (periodo && periodo !== 'all') {
         const diasAtras = parseInt(periodo);
@@ -3823,138 +3849,30 @@ function getDemandasFiltradasDashboard() {
     
     return demandasBase;
 }
-
-// Também precisamos corrigir a função de importação para atualizar o dashboard após a importação
-async function importarDemandas() {
-    const fileInput = document.getElementById('importFile');
-    if (!fileInput.files.length) {
-        showNotification('warning', 'Nenhum Arquivo Selecionado', 'Por favor, selecione um arquivo JSON para importar.');
-        return;
-    }
-
-    const file = fileInput.files[0];
-    const reader = new FileReader();
-
-    reader.onload = async function(event) {
-        try {
-            let importedData = JSON.parse(event.target.result);
-
-            if (!Array.isArray(importedData)) {
-                throw new Error("O arquivo JSON deve conter uma lista de demandas.");
-            }
-
-            // Normaliza cada demanda importada ANTES de qualquer processamento
-            const normalizedImportedData = importedData.map(demanda => normalizarDadosDemanda(demanda));
-
-            let updatedCount = 0;
-            let addedCount = 0;
-            let skippedCount = 0;
-
-            // Primeiro, vamos obter as demandas atuais do servidor para garantir que temos a lista mais recente
-            await carregarDadosDoServidor();
-
-            for (const demandaImportada of normalizedImportedData) {
-                const demandaExistente = todasDemandas.find(d => d.id === demandaImportada.id);
-                
-                if (demandaExistente) {
-                    const dadosAtualizados = {
-                        ...demandaImportada,
-                        id: demandaExistente.id
-                    };
-                    
-                    delete dadosAtualizados.dataCriacao;
-                    
-                    const sucesso = await atualizarDemandaNoServidor(demandaExistente.id, dadosAtualizados);
-                    
-                    if (sucesso) {
-                        updatedCount++;
-                        // Atualizar a demanda localmente
-                        Object.assign(demandaExistente, dadosAtualizados);
-                    } else {
-                        skippedCount++;
-                    }
-                } else {
-                    if (!demandaImportada.id) {
-                        demandaImportada.id = Date.now() + Math.random();
-                    }
-                    
-                    if (!demandaImportada.tag) {
-                        demandaImportada.tag = `DEM-IMP-${Date.now()}`;
-                    }
-                    
-                    const sucesso = await salvarDemandaNoServidor(demandaImportada);
-                    
-                    if (sucesso) {
-                        addedCount++;
-                        // Adicionar a demanda localmente
-                        todasDemandas.push(demandaImportada);
-                    } else {
-                        skippedCount++;
-                    }
-                }
-            }
-
-            // Atualizar a interface após a importação
-            renderizarTodasAsAbas();
-            atualizarDashboard(); // Forçar atualização do dashboard
-            atualizarRanking();
-            atualizarGraficos();
-            atualizarBadges();
-            
-            let message = `Importação concluída. `;
-            if (updatedCount > 0) message += `${updatedCount} demanda(s) atualizada(s). `;
-            if (addedCount > 0) message += `${addedCount} nova(s) demanda(s) adicionada(s). `;
-            if (skippedCount > 0) message += `${skippedCount} demanda(s) ignorada(s) por erro.`;
-            
-            showNotification('success', 'Importação Concluída', message);
-            fileInput.value = '';
-
-        } catch (error) {
-            console.error('Erro ao importar o arquivo JSON:', error);
-            showNotification('error', 'Erro na Importação', `Falha ao ler o arquivo: ${error.message}. Verifique se o formato está correto.`);
-        }
-    };
-
-    reader.onerror = function() {
-        showNotification('error', 'Erro de Leitura', 'Ocorreu um erro ao ler o arquivo selecionado.');
-    };
-
-    reader.readAsText(file);
-}
-
-// Também precisamos garantir que a função renderizarTodasAsAbas inclua a atualização do dashboard
-function renderizarTodasAsAbas() {
-    renderizarDemandas();
-    renderizarAnalise();
-    renderizarAtrasadas();
-    renderizarAprovadas();
-    renderizarPendentesColaboradores();
-    renderizarCobranca();
-    atualizarDashboard(); // Garantir que o dashboard seja atualizado
-    atualizarRanking();
-    atualizarGraficos();
-}
     // Atualizar dashboard
-    function atualizarDashboard() {
-        const demandasFiltradas = getDemandasFiltradas();
-        const totalDemandas = demandasFiltradas.length;
-        const pendentes = demandasFiltradas.filter(d => d.status === 'pendente' || d.status === 'finalizado_pendente_aprovacao' || d.status === 'reprovada' || d.status === 'atribuida_pendente_aceitacao').length;
-        const atrasadas = demandasFiltradas.filter(d => {
-            if (d.status === 'aprovada') return false;
-            const dataLimite = new Date(d.dataLimite);
-            const hoje = new Date();
-            return dataLimite < hoje;
-        }).length;
-        const aprovadas = demandasFiltradas.filter(d => d.status === 'aprovada').length;
-        const rotina = demandasFiltradas.filter(d => d.isRotina).length;
+   function atualizarDashboard() {
+    const demandasFiltradas = getDemandasFiltradas(); // Usar a função corrigida
+    const totalDemandas = demandasFiltradas.length;
+    const pendentes = demandasFiltradas.filter(d => d.status === 'pendente' || d.status === 'finalizado_pendente_aprovacao' || d.status === 'reprovada' || d.status === 'atribuida_pendente_aceitacao').length;
+    const atrasadas = demandasFiltradas.filter(d => {
+        if (d.status === 'aprovada') return false;
+        const dataLimite = new Date(d.dataLimite);
+        const hoje = new Date();
+        return dataLimite < hoje;
+    }).length;
+    const aprovadas = demandasFiltradas.filter(d => d.status === 'aprovada').length;
+    const rotina = demandasFiltradas.filter(d => d.isRotina).length;
 
-        animateValue('totalDemandas', totalDemandas);
-        animateValue('pendentesCount', pendentes);
-        animateValue('atrasadasCount', atrasadas);
-        animateValue('aprovadasCount', aprovadas);
-        animateValue('rotinaCount', rotina);
-    }
-
+    // Resto da função permanece o mesmo...
+    // Atualizar cards do dashboard
+    animateValue('totalDemandasCard', totalDemandas);
+    animateValue('pendentesCard', pendentes);
+    animateValue('atrasadasCard', atrasadas);
+    animateValue('aprovadasCard', aprovadas);
+    animateValue('rotinaCard', rotina);
+    
+    // Resto da função...
+}
     // Animar valor
     function animateValue(elementId, value) {
         const element = document.getElementById(elementId);
