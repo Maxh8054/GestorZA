@@ -5730,107 +5730,101 @@
     }
 
     // Renderizar todas as abas
-    function renderizarTodasAsAbas() {
-        renderizarDemandas();
-        renderizarAnalise();
-        renderizarAtrasadas();
-        renderizarAprovadas();
-        renderizarPendentesColaboradores();
-        renderizarCobranca();
-        atualizarDashboard();
-        atualizarRanking();
-        atualizarGraficos();
-    }
+  function renderizarTodasAsAbas() {
+    renderizarDemandas();
+    renderizarAnalise();
+    renderizarAtrasadas();
+    renderizarAprovadas();
+    renderizarPendentesColaboradores();
+    renderizarCobranca();
+    atualizarBadges();  // Garanta que esta linha esteja presente
+    atualizarDashboard();
+    atualizarRanking();
+    atualizarGraficos();
+}
 
     // Importar demandas
-    function importarDemandas() {
-        const fileInput = document.getElementById('importFile');
-        if (!fileInput.files.length) {
-            showNotification('warning', 'Nenhum Arquivo Selecionado', 'Por favor, selecione um arquivo JSON para importar.');
-            return;
-        }
-
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-
-        reader.onload = async function(event) {
-            try {
-                let importedData = JSON.parse(event.target.result);
-
-                if (!Array.isArray(importedData)) {
-                    throw new Error("O arquivo JSON deve conter uma lista de demandas.");
-                }
-
-                // Normaliza cada demanda importada ANTES de qualquer processamento
-                const normalizedImportedData = importedData.map(demanda => normalizarDadosDemanda(demanda));
-
-                let updatedCount = 0;
-                let addedCount = 0;
-                let skippedCount = 0;
-
-                // Primeiro, vamos obter as demandas atuais do servidor para garantir que temos a lista mais recente
-                await carregarDadosDoServidor();
-
-                for (const demandaImportada of normalizedImportedData) {
-                    const demandaExistente = todasDemandas.find(d => d.id === demandaImportada.id);
-                    
-                    if (demandaExistente) {
-                        const dadosAtualizados = {
-                            ...demandaImportada,
-                            id: demandaExistente.id
-                        };
-                        
-                        delete dadosAtualizados.dataCriacao;
-                        
-                        const sucesso = await atualizarDemandaNoServidor(demandaExistente.id, dadosAtualizados);
-                        
-                        if (sucesso) {
-                            updatedCount++;
-                        } else {
-                            skippedCount++;
-                        }
-                    } else {
-                        if (!demandaImportada.id) {
-                        demandaImportada.id = Date.now() + Math.random();
-                        }
-                        
-                        if (!demandaImportada.tag) {
-                            demandaImportada.tag = `DEM-IMP-${Date.now()}`;
-                        }
-                        
-                        const sucesso = await salvarDemandaNoServidor(demandaImportada);
-                        
-                        if (sucesso) {
-                            addedCount++;
-                        } else {
-                            skippedCount++;
-                        }
-                    }
-                }
-
-                await carregarDadosDoServidor();
-                renderizarTodasAsAbas();
-                
-                let message = `Importação concluída. `;
-                if (updatedCount > 0) message += `${updatedCount} demanda(s) atualizada(s). `;
-                if (addedCount > 0) message += `${addedCount} nova(s) demanda(s) adicionada(s). `;
-                if (skippedCount > 0) message += `${skippedCount} demanda(s) ignorada(s) por erro.`;
-                
-                showNotification('success', 'Importação Concluída', message);
-                fileInput.value = '';
-
-            } catch (error) {
-                console.error('Erro ao importar o arquivo JSON:', error);
-                showNotification('error', 'Erro na Importação', `Falha ao ler o arquivo: ${error.message}. Verifique se o formato está correto.`);
-            }
-        };
-
-        reader.onerror = function() {
-            showNotification('error', 'Erro de Leitura', 'Ocorreu um erro ao ler o arquivo selecionado.');
-        };
-
-        reader.readAsText(file);
+   // Modifique a função importarDemandas() para ficar assim:
+function importarDemandas() {
+    const fileInput = document.getElementById('importFile');
+    if (!fileInput.files.length) {
+        showNotification('warning', 'Nenhum Arquivo Selecionado', 'Por favor, selecione um arquivo JSON para importar.');
+        return;
     }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onload = async function(event) {
+        try {
+            let importedData = JSON.parse(event.target.result);
+
+            if (!Array.isArray(importedData)) {
+                throw new Error("O arquivo JSON deve conter uma lista de demandas.");
+            }
+
+            // Normaliza cada demanda importada ANTES de qualquer processamento
+            const normalizedImportedData = importedData.map(demanda => normalizarDadosDemanda(demanda));
+
+            let updatedCount = 0;
+            let addedCount = 0;
+            let skippedCount = 0;
+
+            // Primeiro, vamos obter as demandas atuais do servidor para garantir que temos a lista mais recente
+            await carregarDadosDoServidor();
+
+            for (const demandaImportada of normalizedImportedData) {
+                const demandaExistente = todasDemandas.find(d => d.id === demandaImportada.id);
+                
+                if (demandaExistente) {
+                    // Atualiza a demanda existente em todasDemandas
+                    const index = todasDemandas.findIndex(d => d.id === demandaImportada.id);
+                    if (index !== -1) {
+                        todasDemandas[index] = { ...todasDemandas[index], ...demandaImportada };
+                        updatedCount++;
+                    }
+                } else {
+                    // Adiciona nova demanda a todasDemandas
+                    if (!demandaImportada.id) {
+                        demandaImportada.id = Date.now() + Math.random();
+                    }
+                    
+                    if (!demandaImportada.tag) {
+                        demandaImportada.tag = `DEM-IMP-${Date.now()}`;
+                    }
+                    
+                    todasDemandas.push(demandaImportada);
+                    addedCount++;
+                }
+            }
+
+            // Força a atualização completa da interface
+            renderizarTodasAsAbas();
+            atualizarBadges();
+            atualizarDashboard();
+            atualizarRanking();
+            atualizarGraficos();
+            
+            let message = `Importação concluída. `;
+            if (updatedCount > 0) message += `${updatedCount} demanda(s) atualizada(s). `;
+            if (addedCount > 0) message += `${addedCount} nova(s) demanda(s) adicionada(s). `;
+            if (skippedCount > 0) message += `${skippedCount} demanda(s) ignorada(s) por erro.`;
+            
+            showNotification('success', 'Importação Concluída', message);
+            fileInput.value = '';
+
+        } catch (error) {
+            console.error('Erro ao importar o arquivo JSON:', error);
+            showNotification('error', 'Erro na Importação', `Falha ao ler o arquivo: ${error.message}. Verifique se o formato está correto.`);
+        }
+    };
+
+    reader.onerror = function() {
+        showNotification('error', 'Erro de Leitura', 'Ocorreu um erro ao ler o arquivo selecionado.');
+    };
+
+    reader.readAsText(file);
+}
 
     // Mapa Mental - Funções atualizadas
     function atualizarMindmap() {
