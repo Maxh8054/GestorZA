@@ -5156,6 +5156,7 @@ async function salvarReprovacao() {
 }
     // Ver detalhes
    // Ver detalhes
+// Ver detalhes
 function verDetalhes(id) {
     const demanda = todasDemandas.find(d => d.id === id);
     if (!demanda) return;
@@ -5173,21 +5174,68 @@ function verDetalhes(id) {
         atribuidosInfo = `<p><strong>Atribuída a:</strong> ${demandaNormalizada.atribuidos.map(a => a.nome).join(', ')}</p>`;
     }
     
+    // Adicionar informações sobre dias da semana se for rotina
+    let diasSemanaInfo = '';
+    if (demandaNormalizada.isRotina && Array.isArray(demandaNormalizada.diasSemana) && demandaNormalizada.diasSemana.length > 0) {
+        const nomesDias = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+        const diasFormatados = demandaNormalizada.diasSemana.map(dia => nomesDias[dia]).join(', ');
+        diasSemanaInfo = `<p><strong>Dias da Semana:</strong> ${diasFormatados}</p>`;
+    }
+    
     const content = `
         <div class="demanda-details">
-            <h3>${demandaNormalizada.nomeDemanda || demandaNormalizada.descricao}</h3>
-            <p><strong>Funcionário:</strong> ${demandaNormalizada.nomeFuncionario}</p>
-            <p><strong>Categoria:</strong> ${demandaNormalizada.categoria}</p>
-            <p><strong>Status:</strong> ${demandaNormalizada.status}</p>
-            <p><strong>Data Limite:</strong> ${new Date(demandaNormalizada.dataLimite).toLocaleDateString('pt-BR')}</p>
-            <p><strong>Data Criação:</strong> ${new Date(demandaNormalizada.dataCriacao).toLocaleDateString('pt-BR')}</p>
-            ${demandaNormalizada.dataConclusao ? `<p><strong>Data Conclusão:</strong> ${new Date(demandaNormalizada.dataConclusao).toLocaleDateString('pt-BR')}</p>` : ''}
+            <h3>${demandaNormalizada.nomeDemanda || 'Sem Título'}</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <div>
+                    <p><strong>Funcionário:</strong> ${demandaNormalizada.nomeFuncionario}</p>
+                    <p><strong>Categoria:</strong> ${demandaNormalizada.categoria}</p>
+                    <p><strong>Local:</strong> ${demandaNormalizada.local || 'N/A'}</p>
+                    <p><strong>Prioridade:</strong> <span style="color: ${demandaNormalizada.prioridade === 'Importante' ? '#e74c3c' : demandaNormalizada.prioridade === 'Média' ? '#f39c12' : '#27ae60'}">${demandaNormalizada.prioridade}</span></p>
+                    <p><strong>Complexidade:</strong> ${demandaNormalizada.complexidade}</p>
+                </div>
+                <div>
+                    <p><strong>Status:</strong> ${demandaNormalizada.status.replace(/_/g, ' ')}</p>
+                    <p><strong>Data Criação:</strong> ${new Date(demandaNormalizada.dataCriacao).toLocaleDateString('pt-BR')}</p>
+                    <p><strong>Data Limite:</strong> ${new Date(demandaNormalizada.dataLimite).toLocaleDateString('pt-BR')}</p>
+                    ${demandaNormalizada.dataConclusao ? `<p><strong>Data Conclusão:</strong> ${new Date(demandaNormalizada.dataConclusao).toLocaleDateString('pt-BR')}</p>` : ''}
+                    ${demandaNormalizada.isRotina ? `<p><strong>Tipo:</strong> <span style="color: #9b59b6;">Tarefa de Rotina</span></p>` : ''}
+                </div>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                <h4 style="margin-top: 0; color: #2c3e50;">📝 Descrição da Demanda</h4>
+                <p style="white-space: pre-wrap; line-height: 1.5;">${demandaNormalizada.descricao || 'Nenhuma descrição informada.'}</p>
+            </div>
+            
+            ${diasSemanaInfo}
             ${tempoInfo}
-            ${demandaNormalizada.comentarios ? `<p><strong>Comentários do Funcionário:</strong> ${demandaNormalizada.comentarios}</p>` : ''}
-            ${demandaNormalizada.comentarioGestor ? `<p><strong>Comentário do Gestor:</strong> ${demandaNormalizada.comentarioGestor}</p>` : ''}
-            ${demandaNormalizada.comentarioReprovacaoAtribuicao ? `<p><strong>Motivo da Reprovação:</strong> ${demandaNormalizada.comentarioReprovacaoAtribuicao}</p>` : ''}
-            ${demandaNormalizada.isRotina ? `<p><strong>Tipo:</strong> Tarefa de Rotina</p>` : ''}
             ${atribuidosInfo}
+            
+            ${demandaNormalizada.comentarios ? `
+                <div style="background: #e8f5e8; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                    <h4 style="margin-top: 0; color: #27ae60;">💬 Comentários do Funcionário</h4>
+                    <p style="white-space: pre-wrap; line-height: 1.5;">${demandaNormalizada.comentarios}</p>
+                </div>
+            ` : ''}
+            
+            ${demandaNormalizada.comentarioGestor ? `
+                <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                    <h4 style="margin-top: 0; color: #856404;">👔 Comentário do Gestor</h4>
+                    <p style="white-space: pre-wrap; line-height: 1.5;">${demandaNormalizada.comentarioGestor}</p>
+                </div>
+            ` : ''}
+            
+            ${demandaNormalizada.comentarioReprovacaoAtribuicao ? `
+                <div style="background: #f8d7da; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                    <h4 style="margin-top: 0; color: #721c24;">❌ Motivo da Reprovação</h4>
+                    <p style="white-space: pre-wrap; line-height: 1.5;">${demandaNormalizada.comentarioReprovacaoAtribuicao}</p>
+                </div>
+            ` : ''}
+            
+            <div style="background: #e9ecef; padding: 10px; border-radius: 5px; text-align: center;">
+                <small><strong>TAG:</strong> ${demandaNormalizada.tag}</small>
+            </div>
         </div>
     `;
     
