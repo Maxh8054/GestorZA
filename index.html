@@ -2383,63 +2383,71 @@
     </div>
 </div>
 
-            <div id="atrasadas" class="tab-content">
-                <div class="card">
-                    <div class="card-header">
-                        <h2><i class="fas fa-exclamation-triangle"></i> Demandas Atrasadas</h2>
-                        <div class="card-actions" id="gestorActions2" style="display: none;">
-                            <button onclick="reassignSelectedOverdue()"><i class="fas fa-user-plus"></i> Reatribuir</button>
-                            <button onclick="extendSelectedDeadlines()"><i class="fas fa-calendar-plus"></i> Estender Prazos</button>
-                        </div>
-                        <div class="date-filter-container">
-                            <div class="year-filter">
-                                <label for="atrasadasYearFilter">Ano:</label>
-                                <select id="atrasadasYearFilter" onchange="filterAtrasadas()">
-                                    <option value="">Todos os anos</option>
-                                </select>
-                            </div>
-                            <div class="month-filter">
-                                <label for="atrasadasMonthFilter">Mês:</label>
-                                <select id="atrasadasMonthFilter" onchange="filterAtrasadas()">
-                                    <option value="">Todos os meses</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="batch-actions" id="overdueBatchActions" style="display: none;">
-                        <button onclick="selectAllOverdue()"><i class="fas fa-check-square"></i> Selecionar Todas</button>
-                        <button onclick="deselectAllOverdue()"><i class="fas fa-square"></i> Desmarcar Todas</button>
-                        <span id="selectedOverdueCount">0 demandas selecionadas</span>
-                    </div>
-                    <div id="atrasadasContainer"></div>
+         <div id="atrasadas" class="tab-content">
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-exclamation-triangle"></i> Demandas Atrasadas</h2>
+            <div class="card-actions" id="gestorActions2" style="display: none;">
+                <button onclick="reassignSelectedOverdue()"><i class="fas fa-user-plus"></i> Reatribuir</button>
+                <button onclick="extendSelectedDeadlines()"><i class="fas fa-calendar-plus"></i> Estender Prazos</button>
+            </div>
+            <!-- NOVO FILTRO POR COLABORADORES -->
+            <select id="atrasadasFuncFilter" onchange="filterAtrasadas()">
+                <option value="todos">Todos os Colaboradores</option>
+            </select>
+            <div class="date-filter-container">
+                <div class="year-filter">
+                    <label for="atrasadasYearFilter">Ano:</label>
+                    <select id="atrasadasYearFilter" onchange="filterAtrasadas()">
+                        <option value="">Todos os anos</option>
+                    </select>
+                </div>
+                <div class="month-filter">
+                    <label for="atrasadasMonthFilter">Mês:</label>
+                    <select id="atrasadasMonthFilter" onchange="filterAtrasadas()">
+                        <option value="">Todos os meses</option>
+                    </select>
                 </div>
             </div>
+        </div>
+        <div class="batch-actions" id="overdueBatchActions" style="display: none;">
+            <button onclick="selectAllOverdue()"><i class="fas fa-check-square"></i> Selecionar Todas</button>
+            <button onclick="deselectAllOverdue()"><i class="fas fa-square"></i> Desmarcar Todas</button>
+            <span id="selectedOverdueCount">0 demandas selecionadas</span>
+        </div>
+        <div id="atrasadasContainer"></div>
+    </div>
+</div>
 
             <div id="aprovadas" class="tab-content">
-                <div class="card">
-                    <div class="card-header">
-                        <h2><i class="fas fa-check-circle"></i> Minhas Demandas Concluídas</h2>
-                        <div class="card-actions" id="gestorActions3" style="display: none;">
-                            <button onclick="exportCompleted()"><i class="fas fa-download"></i> Exportar Concluídas</button>
-                        </div>
-                        <div class="date-filter-container">
-                            <div class="year-filter">
-                                <label for="aprovadasYearFilter">Ano:</label>
-                                <select id="aprovadasYearFilter" onchange="filterAprovadas()">
-                                    <option value="">Todos os anos</option>
-                                </select>
-                            </div>
-                            <div class="month-filter">
-                                <label for="aprovadasMonthFilter">Mês:</label>
-                                <select id="aprovadasMonthFilter" onchange="filterAprovadas()">
-                                    <option value="">Todos os meses</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="aprovadasContainer"></div>
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-check-circle"></i> Minhas Demandas Concluídas</h2>
+            <div class="card-actions" id="gestorActions3" style="display: none;">
+                <button onclick="exportCompleted()"><i class="fas fa-download"></i> Exportar Concluídas</button>
+            </div>
+            <!-- NOVO FILTRO POR COLABORADORES -->
+            <select id="aprovadasFuncFilter" onchange="filterAprovadas()">
+                <option value="todos">Todos os Colaboradores</option>
+            </select>
+            <div class="date-filter-container">
+                <div class="year-filter">
+                    <label for="aprovadasYearFilter">Ano:</label>
+                    <select id="aprovadasYearFilter" onchange="filterAprovadas()">
+                        <option value="">Todos os anos</option>
+                    </select>
+                </div>
+                <div class="month-filter">
+                    <label for="aprovadasMonthFilter">Mês:</label>
+                    <select id="aprovadasMonthFilter" onchange="filterAprovadas()">
+                        <option value="">Todos os meses</option>
+                    </select>
                 </div>
             </div>
+        </div>
+        <div id="aprovadasContainer"></div>
+    </div>
+</div>
 
             <div id="mindmap" class="tab-content">
                 <div class="mindmap-container">
@@ -3352,12 +3360,15 @@
     // Carregar funcionários nos selects
    // Carregar funcionários nos selects
 // Carregar funcionários nos selects
+// Carregar funcionários nos selects
 function carregarFuncionariosNosSelect() {
     const selects = [
         'filtroFuncionario', 
         'cobrancaFuncionario', 
         'colabFuncFilter', 
-        'analiseFuncFilter', // <-- ADICIONAR ESTE
+        'analiseFuncFilter', 
+        'atrasadasFuncFilter', // <-- ADICIONAR ESTE
+        'aprovadasFuncFilter', // <-- ADICIONAR ESTE
         'reassignTo', 
         'noteAssignTo', 
         'mindmapFuncFilter'
@@ -3368,7 +3379,12 @@ function carregarFuncionariosNosSelect() {
         if (select) {
             select.innerHTML = '';
             
-            if (selectId === 'filtroFuncionario' || selectId === 'colabFuncFilter' || selectId === 'mindmapFuncFilter' || selectId === 'analiseFuncFilter') { // <-- ADICIONAR ESTE
+            if (selectId === 'filtroFuncionario' || 
+                selectId === 'colabFuncFilter' || 
+                selectId === 'mindmapFuncFilter' || 
+                selectId === 'analiseFuncFilter' || 
+                selectId === 'atrasadasFuncFilter' || // <-- ADICIONAR ESTE
+                selectId === 'aprovadasFuncFilter') { // <-- ADICIONAR ESTE
                 const defaultOption = new Option('Todos os Funcionários', 'todos');
                 select.add(defaultOption);
             } else if (selectId === 'cobrancaFuncionario') {
@@ -3410,6 +3426,7 @@ function carregarFuncionariosNosSelect() {
     
     inicializarCampoMultiSelect();
 }
+
     // Inicializar campo de seleção múltipla
     function inicializarCampoMultiSelect() {
         const dropdown = document.getElementById('atribuidoADropdown');
@@ -4491,88 +4508,96 @@ function renderizarAnalise() {
 }
 
     // Renderizar atrasadas
-    function renderizarAtrasadas() {
-        // Se for gestor, mostrar todas as demandas atrasadas dos colaboradores
-        let demandasParaMostrar;
-        if (usuarioLogado && usuarioLogado.role === 'gestor') {
-            demandasParaMostrar = todasDemandas.filter(d => {
-                if (d.status === 'aprovada') return false;
-                const dataLimite = new Date(d.dataLimite);
-                const hoje = new Date();
-                return dataLimite < hoje;
-            });
-        } else {
-            demandasParaMostrar = getDemandasParaUsuarioLogado().filter(d => {
-                if (d.status === 'aprovada') return false;
-                const dataLimite = new Date(d.dataLimite);
-                const hoje = new Date();
-                return dataLimite < hoje;
-            });
-        }
-
-        const monthFilter = document.getElementById('atrasadasMonthFilter')?.value || '';
-        const yearFilter = document.getElementById('atrasadasYearFilter')?.value || '';
-
-        const atrasadasContainer = document.getElementById('atrasadasContainer');
-        
-        if (atrasadasContainer) atrasadasContainer.innerHTML = '';
-
-        let atrasadas = demandasParaMostrar.filter(d => {
-            const matchesDate = matchesDateFilter(d, monthFilter, yearFilter);
-            return matchesDate;
+  // Renderizar atrasadas
+function renderizarAtrasadas() {
+    // Se for gestor, mostrar todas as demandas atrasadas dos colaboradores
+    let demandasParaMostrar;
+    if (usuarioLogado && usuarioLogado.role === 'gestor') {
+        demandasParaMostrar = todasDemandas.filter(d => {
+            if (d.status === 'aprovada') return false;
+            const dataLimite = new Date(d.dataLimite);
+            const hoje = new Date();
+            return dataLimite < hoje;
         });
-        
-        // Mostrar ações em lote se houver demandas atrasadas
-        const batchActions = document.getElementById('overdueBatchActions');
-        if (batchActions) {
-            batchActions.style.display = atrasadas.length > 0 ? 'flex' : 'none';
-        }
-        
-        if (atrasadasContainer) {
-            if (atrasadas.length === 0) {
-                atrasadasContainer.innerHTML = '<p>Nenhuma demanda atrasada no momento.</p>';
-            } else {
-                atrasadas.forEach(demanda => {
-                    atrasadasContainer.appendChild(criarElementoDemandaAtrasada(demanda, true));
-                });
-            }
+    } else {
+        demandasParaMostrar = getDemandasParaUsuarioLogado().filter(d => {
+            if (d.status === 'aprovada') return false;
+            const dataLimite = new Date(d.dataLimite);
+            const hoje = new Date();
+            return dataLimite < hoje;
+        });
+    }
+
+    // Adicionar filtro por colaborador
+    const funcFilter = document.getElementById('atrasadasFuncFilter')?.value || 'todos';
+    const monthFilter = document.getElementById('atrasadasMonthFilter')?.value || '';
+    const yearFilter = document.getElementById('atrasadasYearFilter')?.value || '';
+
+    const atrasadasContainer = document.getElementById('atrasadasContainer');
+    
+    if (atrasadasContainer) atrasadasContainer.innerHTML = '';
+
+    let atrasadas = demandasParaMostrar.filter(d => {
+        const matchesFunc = funcFilter === 'todos' || d.funcionarioId == funcFilter;
+        const matchesDate = matchesDateFilter(d, monthFilter, yearFilter);
+        return matchesFunc && matchesDate;
+    });
+    
+    // Mostrar ações em lote se houver demandas atrasadas
+    const batchActions = document.getElementById('overdueBatchActions');
+    if (batchActions) {
+        batchActions.style.display = atrasadas.length > 0 ? 'flex' : 'none';
+    }
+    
+    if (atrasadasContainer) {
+        if (atrasadas.length === 0) {
+            atrasadasContainer.innerHTML = '<p>Nenhuma demanda atrasada no momento.</p>';
+        } else {
+            atrasadas.forEach(demanda => {
+                atrasadasContainer.appendChild(criarElementoDemandaAtrasada(demanda, true));
+            });
         }
     }
+}
 
     // Renderizar aprovadas
-    function renderizarAprovadas() {
-        let demandasDoUsuario;
+   // Renderizar aprovadas
+function renderizarAprovadas() {
+    let demandasDoUsuario;
+    
+    // Para gestores, mostrar todas as demandas concluídas dos colaboradores
+    if (usuarioLogado && usuarioLogado.role === 'gestor') {
+        demandasDoUsuario = todasDemandas.filter(d => d.status === 'aprovada');
+    } else {
+        demandasDoUsuario = getDemandasParaUsuarioLogado();
+    }
+    
+    // Adicionar filtro por colaborador
+    const funcFilter = document.getElementById('aprovadasFuncFilter')?.value || 'todos';
+    const monthFilter = document.getElementById('aprovadasMonthFilter')?.value || '';
+    const yearFilter = document.getElementById('aprovadasYearFilter')?.value || '';
+
+    const aprovadasContainer = document.getElementById('aprovadasContainer');
+    
+    if (aprovadasContainer) aprovadasContainer.innerHTML = '';
+
+    let concluidas = demandasDoUsuario.filter(d => {
+        const matchesFunc = funcFilter === 'todos' || d.funcionarioId == funcFilter;
+        const matchesDate = matchesDateFilter(d, monthFilter, yearFilter);
         
-        // Para gestores, mostrar todas as demandas concluídas dos colaboradores
-        if (usuarioLogado && usuarioLogado.role === 'gestor') {
-            demandasDoUsuario = todasDemandas.filter(d => d.status === 'aprovada');
+        return matchesFunc && matchesDate && d.status === 'aprovada';
+    });
+    
+    if (aprovadasContainer) {
+        if (concluidas.length === 0) {
+            aprovadasContainer.innerHTML = '<p>Nenhuma demanda concluída a ser exibida.</p>';
         } else {
-            demandasDoUsuario = getDemandasParaUsuarioLogado();
-        }
-        
-        const monthFilter = document.getElementById('aprovadasMonthFilter')?.value || '';
-        const yearFilter = document.getElementById('aprovadasYearFilter')?.value || '';
-
-        const aprovadasContainer = document.getElementById('aprovadasContainer');
-        
-        if (aprovadasContainer) aprovadasContainer.innerHTML = '';
-
-        let concluidas = demandasDoUsuario.filter(d => {
-            const matchesDate = matchesDateFilter(d, monthFilter, yearFilter);
-            
-            return matchesDate && d.status === 'aprovada';
-        });
-        
-        if (aprovadasContainer) {
-            if (concluidas.length === 0) {
-                aprovadasContainer.innerHTML = '<p>Nenhuma demanda concluída a ser exibida.</p>';
-            } else {
-                concluidas.forEach(demanda => {
-                    aprovadasContainer.appendChild(criarElementoDemanda(demanda));
-                });
-            }
+            concluidas.forEach(demanda => {
+                aprovadasContainer.appendChild(criarElementoDemanda(demanda));
+            });
         }
     }
+}
 
     // Renderizar pendentes dos colaboradores
     function renderizarPendentesColaboradores() {
