@@ -2992,37 +2992,156 @@
     }
 
     // Função para normalizar dados de uma demanda
-    function normalizarDadosDemanda(demanda) {
-        if (!demanda) return demanda;
+   // Função para normalizar dados de uma demanda
+function normalizarDadosDemanda(demanda) {
+    if (!demanda) return demanda;
 
-        // Garante que 'diasSemana' seja um array
-        if (typeof demanda.diasSemana === 'string') {
-            try {
-                demanda.diasSemana = JSON.parse(demanda.diasSemana);
-            } catch (e) {
-                demanda.diasSemana = [];
-            }
-        } else if (!Array.isArray(demanda.diasSemana)) {
+    // Garante que 'diasSemana' seja um array
+    if (typeof demanda.diasSemana === 'string') {
+        try {
+            demanda.diasSemana = JSON.parse(demanda.diasSemana);
+        } catch (e) {
             demanda.diasSemana = [];
         }
-
-        // Garante que 'atribuidos' seja um array
-        if (typeof demanda.atribuidos === 'string') {
-            try {
-                demanda.atribuidos = JSON.parse(demanda.atribuidos);
-            } catch (e) {
-                demanda.atribuidos = [];
-            }
-        } else if (!Array.isArray(demanda.atribuidos)) {
-            demanda.atribuidos = [];
-        }
-
-        // Garante que 'isRotina' seja um booleano
-        demanda.isRotina = Boolean(demanda.isRotina);
-
-        return demanda;
+    } else if (!Array.isArray(demanda.diasSemana)) {
+        demanda.diasSemana = [];
     }
 
+    // Garante que 'atribuidos' seja um array
+    if (typeof demanda.atribuidos === 'string') {
+        try {
+            demanda.atribuidos = JSON.parse(demanda.atribuidos);
+        } catch (e) {
+            demanda.atribuidos = [];
+        }
+    } else if (!Array.isArray(demanda.atribuidos)) {
+        demanda.atribuidos = [];
+    }
+
+    // Garante que 'isRotina' seja um booleano
+    demanda.isRotina = Boolean(demanda.isRotina);
+
+    // Padronização dos campos que podem estar faltando
+    if (!demanda.anexosCriacao) demanda.anexosCriacao = [];
+    if (!demanda.anexosResolucao) demanda.anexosResolucao = [];
+    if (!demanda.comentarioReprovacaoAtribuicao) demanda.comentarioReprovacaoAtribuicao = "";
+    if (!demanda.nomeDemanda) demanda.nomeDemanda = demanda.descricao || "";
+    if (!demanda.dataAtualizacao) demanda.dataAtualizacao = demanda.dataCriacao;
+    if (!demanda.criadoPor) demanda.criadoPor = demanda.funcionarioId;
+    if (!demanda.atualizadoPor) demanda.atualizadoPor = null;
+    
+    // Garante que complexidade seja um valor padrão
+    if (demanda.complexidade === "Alta") demanda.complexidade = "Difícil";
+    else if (demanda.complexidade === "Baixa") demanda.complexidade = "Fácil";
+    
+    return demanda;
+}
+
+// Modificar a função de importação para garantir que todas as demandas sejam normalizadas
+async function importarDemandas() {
+    const fileInput = document.getElementById('importFile');
+    if (!fileInput.files.length) {
+        showNotification('warning', 'Nenhum Arquivo Selecionado', 'Por favor, selecione um arquivo JSON para importar.');
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onload = async function(event) {
+        try {
+            let importedData = JSON.parse(event.target.result);
+
+            if (!Array.isArray(importedData)) {
+                throw new Error("O arquivo JSON deve conter uma lista de demandas.");
+            }
+
+            // Limpa a lista atual de demandas para evitar duplicatas
+            todasDemandas = [];
+            
+            // Normaliza cada demanda importada ANTES de qualquer processamento
+            const normalizedImportedData = importedData.map(demanda => normalizarDadosDemanda(demanda));
+
+            let addedCount = 0;
+            let skippedCount = 0;
+
+            // Adiciona todas as demandas normalizadas
+            for (const demandaImportada of normalizedImportedData) {
+                // Garante que a demanda tenha um ID
+                if (!demandaImportada.id) {
+                    demandaImportada.id = Date.now() + Math.random();
+                }
+                
+                // Garante que a demanda tenha uma TAG
+                if (!demandaImportada.tag) {
+                    demandaImportada.tag = `DEM-IMP-${Date.now()}`;
+                }
+                
+                // Salva a demanda no servidor
+                const sucesso = await salvarDemandaNoServidor(demandaImportada);
+                
+                if (sucesso) {
+                    todasDemandas.push(demandaImportada);
+                    addedCount++;
+                } else {
+                    skippedCount++;
+                }
+            }
+
+            // Atualiza a interface
+            renderizarTodasAsAbas();
+            
+            let message = `Importação concluída. `;
+            if (addedCount > 0) message += `${addedCount} demanda(s) adicionada(s). `;
+            if (skippedCount > 0) message += `${skippedCount} demanda(s) ignorada(s) por erro.`;
+            
+            showNotification('success', 'Importação Concluída', message);
+            fileInput.value = '';
+
+        } catch (error) {
+            console.error('Erro ao importar o arquivo JSON:', error);
+            showNotification('error', 'Erro na Importação', `Falha ao ler o arquivo: ${error.message}. Verifique se o formato está correto.`);
+        }
+    };
+
+    reader.onerror = function() {
+        showNotification('error', 'Erro de Leitura', 'Ocorreu um erro ao ler o arquivo selecionado.');
+    };
+
+    reader.readAsText(file);
+}
+
+// Modificar a função carregarDadosDoServidor para limpar e recarregar todas as demandas
+async function carregarDadosDoServidor() {
+    try {
+        const response = await fetch(`${SERVER_URL}/api/demandas`);
+        if (response.ok) {
+            const demandasDoServidor = await response.json();
+            
+            // Limpa a lista atual de demandas
+            todasDemandas = [];
+            
+            // Normaliza os dados recebidos
+            const demandasNormalizadas = demandasDoServidor.map(demanda => normalizarDadosDemanda(demanda));
+            
+            // Adiciona todas as demandas normalizadas
+            demandasNormalizadas.forEach(demanda => {
+                todasDemandas.push(demanda);
+            });
+            
+        } else {
+            showNotification('error', 'Erro de Conexão', 'Não foi possível conectar ao servidor.');
+        }
+    } catch (error) {
+        console.error('Erro de conexão com o servidor:', error);
+        showNotification('error', 'Erro de Conexão', 'Não foi possível conectar ao servidor.');
+    }
+    
+    renderizarDemandas();
+    renderizarCobranca();
+    atualizarBadges();
+    atualizarMindmap();
+}
     // Funções de notificação
     function toggleNotificationsDropdown() {
         const dropdown = document.getElementById('notificationsDropdown');
