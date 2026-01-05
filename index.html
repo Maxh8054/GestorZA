@@ -2352,34 +2352,36 @@
                 </div>
             </div>
 
-            <div id="analise" class="tab-content">
-                <div class="card">
-                    <div class="card-header">
-                        <h2><i class="fas fa-search"></i> Demandas em Análise</h2>
-                        <div class="card-actions">
-                            <select id="analiseFilter" onchange="filterAnalise()">
-                                <option value="todos">Todos</option>
-                                <option value="finalizado_pendente_aprovacao">Pendente Aprovação</option>
-                            </select>
-                            <div class="date-filter-container">
-                                <div class="year-filter">
-                                    <label for="analiseYearFilter">Ano:</label>
-                                    <select id="analiseYearFilter" onchange="filterAnalise()">
-                                        <option value="">Todos os anos</option>
-                                    </select>
-                                </div>
-                                <div class="month-filter">
-                                    <label for="analiseMonthFilter">Mês:</label>
-                                    <select id="analiseMonthFilter" onchange="filterAnalise()">
-                                        <option value="">Todos os meses</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
+          <div id="analise" class="tab-content">
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-search"></i> Demandas em Análise</h2>
+            <div class="card-actions">
+                <!-- NOVO FILTRO POR COLABORADORES -->
+                <select id="analiseFuncFilter" onchange="filterAnalise()">
+                    <option value="todos">Todos os Colaboradores</option>
+                </select>
+                
+                <!-- FILTROS DE DATA (MANTIDOS) -->
+                <div class="date-filter-container">
+                    <div class="year-filter">
+                        <label for="analiseYearFilter">Ano:</label>
+                        <select id="analiseYearFilter" onchange="filterAnalise()">
+                            <option value="">Todos os anos</option>
+                        </select>
                     </div>
-                    <div id="analiseContainer"></div>
+                    <div class="month-filter">
+                        <label for="analiseMonthFilter">Mês:</label>
+                        <select id="analiseMonthFilter" onchange="filterAnalise()">
+                            <option value="">Todos os meses</option>
+                        </select>
+                    </div>
                 </div>
             </div>
+        </div>
+        <div id="analiseContainer"></div>
+    </div>
+</div>
 
             <div id="atrasadas" class="tab-content">
                 <div class="card">
@@ -3348,45 +3350,66 @@
     }
 
     // Carregar funcionários nos selects
-    function carregarFuncionariosNosSelect() {
-        const selects = ['filtroFuncionario', 'cobrancaFuncionario', 'colabFuncFilter', 'colabLocalFilter', 'reassignTo', 'noteAssignTo', 'mindmapFuncFilter', 'mindmapLocalFilter'];
-        
-        selects.forEach(selectId => {
-            const select = document.getElementById(selectId);
-            if (select) {
-                select.innerHTML = '';
-                
-                if (selectId === 'filtroFuncionario' || selectId === 'colabFuncFilter' || selectId === 'mindmapFuncFilter') {
-                    const defaultOption = new Option('Todos os Funcionários', 'todos');
-                    select.add(defaultOption);
-                } else if (selectId === 'cobrancaFuncionario') {
-                    const defaultOption = new Option('Todos os Funcionários com Demandas Atrasadas', 'todos');
-                    select.add(defaultOption);
-                } else if (selectId === 'colabLocalFilter' || selectId === 'mindmapLocalFilter') {
-                    const defaultOption = new Option('Todos os Locais', 'todos');
-                    select.add(defaultOption);
-                    const optionLundin = new Option('Lundin', 'Lundin');
-                    select.add(optionLundin);
-                    const optionRD = new Option('R&D', 'R&D');
-                    select.add(optionRD);
-                } else if (selectId === 'reassignTo') {
-                    const defaultOption = new Option('Selecione um funcionário', '');
-                    select.add(defaultOption);
-                } else if (selectId === 'noteAssignTo') {
-                    const defaultOption = new Option('Não atribuir', '');
-                    select.add(defaultOption);
-                }
-
-                usuarios.filter(u => u.role === 'funcionario').forEach(func => {
-                    const option = new Option(func.nome, func.id);
-                    select.add(option);
-                });
+   // Carregar funcionários nos selects
+// Carregar funcionários nos selects
+function carregarFuncionariosNosSelect() {
+    const selects = [
+        'filtroFuncionario', 
+        'cobrancaFuncionario', 
+        'colabFuncFilter', 
+        'analiseFuncFilter', // <-- ADICIONAR ESTE
+        'reassignTo', 
+        'noteAssignTo', 
+        'mindmapFuncFilter'
+    ];
+    
+    selects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (select) {
+            select.innerHTML = '';
+            
+            if (selectId === 'filtroFuncionario' || selectId === 'colabFuncFilter' || selectId === 'mindmapFuncFilter' || selectId === 'analiseFuncFilter') { // <-- ADICIONAR ESTE
+                const defaultOption = new Option('Todos os Funcionários', 'todos');
+                select.add(defaultOption);
+            } else if (selectId === 'cobrancaFuncionario') {
+                const defaultOption = new Option('Todos os Funcionários com Demandas Atrasadas', 'todos');
+                select.add(defaultOption);
+            } else if (selectId === 'reassignTo') {
+                const defaultOption = new Option('Selecione um funcionário', '');
+                select.add(defaultOption);
+            } else if (selectId === 'noteAssignTo') {
+                const defaultOption = new Option('Não atribuir', '');
+                select.add(defaultOption);
             }
-        });
-        
-        inicializarCampoMultiSelect();
-    }
 
+            usuarios.filter(u => u.role === 'funcionario').forEach(func => {
+                const option = new Option(func.nome, func.id);
+                select.add(option);
+            });
+        }
+    });
+    
+    // Configurar separadamente o filtro de locais para apenas Lundin e R&D
+    const localSelects = ['colabLocalFilter', 'mindmapLocalFilter'];
+    
+    localSelects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (select) {
+            select.innerHTML = '';
+            
+            const defaultOption = new Option('Todos os Locais', 'todos');
+            select.add(defaultOption);
+            
+            const optionLundin = new Option('Lundin', 'Lundin');
+            select.add(optionLundin);
+            
+            const optionRD = new Option('R&D', 'R&D');
+            select.add(optionRD);
+        }
+    });
+    
+    inicializarCampoMultiSelect();
+}
     // Inicializar campo de seleção múltipla
     function inicializarCampoMultiSelect() {
         const dropdown = document.getElementById('atribuidoADropdown');
@@ -4428,43 +4451,44 @@ async function salvarReprovacao() {
     }
 
     // Renderizar análise
-    function renderizarAnalise() {
-        let demandasDoUsuario;
+   // Renderizar análise
+function renderizarAnalise() {
+    let demandasDoUsuario;
+    
+    // Para gestores, mostrar todas as demandas em análise dos colaboradores
+    if (usuarioLogado && usuarioLogado.role === 'gestor') {
+        demandasDoUsuario = todasDemandas.filter(d => d.status === 'finalizado_pendente_aprovacao');
+    } else {
+        // Para funcionários, mostrar apenas suas próprias demandas em análise
+        demandasDoUsuario = getDemandasParaUsuarioLogado().filter(d => d.status === 'finalizado_pendente_aprovacao');
+    }
+    
+    const funcFilter = document.getElementById('analiseFuncFilter')?.value || 'todos';
+    const monthFilter = document.getElementById('analiseMonthFilter')?.value || '';
+    const yearFilter = document.getElementById('analiseYearFilter')?.value || '';
+
+    const analiseContainer = document.getElementById('analiseContainer');
+    
+    if (analiseContainer) analiseContainer.innerHTML = '';
+
+    let analise = demandasDoUsuario.filter(d => {
+        const matchesFunc = funcFilter === 'todos' || d.funcionarioId == funcFilter;
+        const matchesDate = matchesDateFilter(d, monthFilter, yearFilter);
         
-        // Para gestores, mostrar todas as demandas em análise dos colaboradores
-        if (usuarioLogado && usuarioLogado.role === 'gestor') {
-            demandasDoUsuario = todasDemandas.filter(d => d.status === 'finalizado_pendente_aprovacao');
+        return matchesFunc && matchesDate;
+    });
+    
+    if (analiseContainer) {
+        if (analise.length === 0) {
+            analiseContainer.innerHTML = '<p>Nenhuma demanda em análise no momento.</p>';
         } else {
-            demandasDoUsuario = getDemandasParaUsuarioLogado();
-        }
-        
-        const statusFilter = document.getElementById('analiseFilter')?.value || 'todos';
-        const monthFilter = document.getElementById('analiseMonthFilter')?.value || '';
-        const yearFilter = document.getElementById('analiseYearFilter')?.value || '';
-
-        const analiseContainer = document.getElementById('analiseContainer');
-        
-        if (analiseContainer) analiseContainer.innerHTML = '';
-
-        let analise = demandasDoUsuario.filter(d => {
-            const matchesStatus = statusFilter === 'todos' || d.status === statusFilter;
-            
-            const matchesDate = matchesDateFilter(d, monthFilter, yearFilter);
-            
-            return matchesStatus && matchesDate && d.status === 'finalizado_pendente_aprovacao';
-        });
-        
-        if (analiseContainer) {
-            if (analise.length === 0) {
-                analiseContainer.innerHTML = '<p>Nenhuma demanda em análise no momento.</p>';
-            } else {
-                analise.forEach(demanda => {
-                    const elemento = criarElementoDemanda(demanda);
-                    analiseContainer.appendChild(elemento);
-                });
-            }
+            analise.forEach(demanda => {
+                const elemento = criarElementoDemanda(demanda);
+                analiseContainer.appendChild(elemento);
+            });
         }
     }
+}
 
     // Renderizar atrasadas
     function renderizarAtrasadas() {
