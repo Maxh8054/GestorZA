@@ -3850,23 +3850,53 @@ async function carregarDadosDoServidor() {
     return demandasBase;
 }
     // Atualizar dashboard
-   function atualizarDashboard() {
+ function atualizarDashboard() {
     console.log('Atualizando dashboard...'); // Debug
     console.log('Total de demandas:', todasDemandas.length); // Debug
     
-    const demandasFiltradas = getDemandasFiltradas();
-    console.log('Demandas filtradas:', demandasFiltradas.length); // Debug
+    // Usar diretamente todasDemandas para gestores
+    let demandasBase;
+    if (usuarioLogado && usuarioLogado.role === 'gestor') {
+        demandasBase = todasDemandas; // Mostrar todas as demandas para gestores
+    } else {
+        demandasBase = getDemandasParaUsuarioLogado(); // Para funcionários, mostrar apenas as deles
+    }
     
-    const totalDemandas = demandasFiltradas.length;
-    const pendentes = demandasFiltradas.filter(d => d.status === 'pendente' || d.status === 'finalizado_pendente_aprovacao' || d.status === 'reprovada' || d.status === 'atribuida_pendente_aceitacao').length;
-    const atrasadas = demandasFiltradas.filter(d => {
+    // Aplicar filtros adicionais se necessário
+    if (filtroFuncionarioAtual !== 'todos') {
+        demandasBase = demandasBase.filter(d => d.funcionarioId == filtroFuncionarioAtual);
+    }
+    
+    const periodo = document.getElementById('dashboardPeriodoFilter')?.value;
+    if (periodo && periodo !== 'all') {
+        const diasAtras = parseInt(periodo);
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - diasAtras);
+        demandasBase = demandasBase.filter(d => new Date(d.dataCriacao) >= cutoffDate);
+    }
+    
+    const categoria = document.getElementById('dashboardCategoriaFilter')?.value;
+    if (categoria && categoria !== 'todas') {
+        demandasBase = demandasBase.filter(d => d.categoria === categoria);
+    }
+    
+    const prioridade = document.getElementById('dashboardPrioridadeFilter')?.value;
+    if (prioridade && prioridade !== 'todas') {
+        demandasBase = demandasBase.filter(d => d.prioridade === prioridade);
+    }
+    
+    console.log('Demandas base após filtros:', demandasBase.length); // Debug
+    
+    const totalDemandas = demandasBase.length;
+    const pendentes = demandasBase.filter(d => d.status === 'pendente' || d.status === 'finalizado_pendente_aprovacao' || d.status === 'reprovada' || d.status === 'atribuida_pendente_aceitacao').length;
+    const atrasadas = demandasBase.filter(d => {
         if (d.status === 'aprovada') return false;
         const dataLimite = new Date(d.dataLimite);
         const hoje = new Date();
         return dataLimite < hoje;
     }).length;
-    const aprovadas = demandasFiltradas.filter(d => d.status === 'aprovada').length;
-    const rotina = demandasFiltradas.filter(d => d.isRotina).length;
+    const aprovadas = demandasBase.filter(d => d.status === 'aprovada').length;
+    const rotina = demandasBase.filter(d => d.isRotina).length;
 
     console.log('Totais calculados:', { totalDemandas, pendentes, atrasadas, aprovadas, rotina }); // Debug
 
@@ -3936,11 +3966,12 @@ async function carregarDadosDoServidor() {
     
     // Atualizar tabela de demandas recentes (com segurança)
     try {
-        atualizarTabelaDemandasRecentes(demandasFiltradas);
+        atualizarTabelaDemandasRecentes(demandasBase);
     } catch (error) {
         console.error('Erro ao atualizar tabela de demandas recentes:', error);
     }
 }
+
     // Animar valor
    function animateValue(elementId, value) {
     const element = document.getElementById(elementId);
@@ -5973,7 +6004,7 @@ async function carregarDadosDoServidor() {
     }
 
     // Importar demandas
-   async function importarDemandas() {
+  async function importarDemandas() {
     const fileInput = document.getElementById('importFile');
     if (!fileInput.files.length) {
         showNotification('warning', 'Nenhum Arquivo Selecionado', 'Por favor, selecione um arquivo JSON para importar.');
@@ -6023,6 +6054,12 @@ async function carregarDadosDoServidor() {
                 atualizarRanking();
                 atualizarGraficos();
                 atualizarBadges();
+                
+                // Forçar atualização novamente após um pequeno delay
+                setTimeout(() => {
+                    atualizarDashboard();
+                    console.log('Segunda atualização do dashboard'); // Debug
+                }, 200);
             }, 100); // Pequeno atraso para garantir que o DOM esteja pronto
             
             let message = `Importação concluída. `;
@@ -6043,7 +6080,26 @@ async function carregarDadosDoServidor() {
 
     reader.readAsText(file);
 }
+// Adicionar esta função no final do seu código
+function forcarAtualizacaoDashboardAoMudarAba() {
+    // Adicionar um event listener para a aba do dashboard
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            if (this.textContent.includes('Dashboard')) {
+                setTimeout(() => {
+                    atualizarDashboard();
+                    console.log('Dashboard atualizado ao mudar para aba'); // Debug
+                }, 100);
+            }
+        });
+    });
+}
 
+// Chamar esta função quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    // ... seu código existente ...
+    forcarAtualizacaoDashboardAoMudarAba();
+});
 function forcarAtualizacaoCards() {
     // Forçar atualização imediata dos valores dos cards
     setTimeout(() => {
