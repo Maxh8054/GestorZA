@@ -2992,182 +2992,37 @@
     }
 
     // Função para normalizar dados de uma demanda
-   // Função para normalizar dados de uma demanda
-function normalizarDadosDemanda(demanda) {
-    if (!demanda) return demanda;
+    function normalizarDadosDemanda(demanda) {
+        if (!demanda) return demanda;
 
-    // Garante que 'diasSemana' seja um array
-    if (typeof demanda.diasSemana === 'string') {
-        try {
-            demanda.diasSemana = JSON.parse(demanda.diasSemana);
-        } catch (e) {
+        // Garante que 'diasSemana' seja um array
+        if (typeof demanda.diasSemana === 'string') {
+            try {
+                demanda.diasSemana = JSON.parse(demanda.diasSemana);
+            } catch (e) {
+                demanda.diasSemana = [];
+            }
+        } else if (!Array.isArray(demanda.diasSemana)) {
             demanda.diasSemana = [];
         }
-    } else if (!Array.isArray(demanda.diasSemana)) {
-        demanda.diasSemana = [];
-    }
 
-    // Garante que 'atribuidos' seja um array
-    if (typeof demanda.atribuidos === 'string') {
-        try {
-            demanda.atribuidos = JSON.parse(demanda.atribuidos);
-        } catch (e) {
+        // Garante que 'atribuidos' seja um array
+        if (typeof demanda.atribuidos === 'string') {
+            try {
+                demanda.atribuidos = JSON.parse(demanda.atribuidos);
+            } catch (e) {
+                demanda.atribuidos = [];
+            }
+        } else if (!Array.isArray(demanda.atribuidos)) {
             demanda.atribuidos = [];
         }
-    } else if (!Array.isArray(demanda.atribuidos)) {
-        demanda.atribuidos = [];
+
+        // Garante que 'isRotina' seja um booleano
+        demanda.isRotina = Boolean(demanda.isRotina);
+
+        return demanda;
     }
 
-    // Garante que 'isRotina' seja um booleano
-    demanda.isRotina = Boolean(demanda.isRotina);
-
-    // Padronização dos campos que podem estar faltando
-    if (!demanda.anexosCriacao) demanda.anexosCriacao = [];
-    if (!demanda.anexosResolucao) demanda.anexosResolucao = [];
-    if (!demanda.comentarioReprovacaoAtribuicao) demanda.comentarioReprovacaoAtribuicao = "";
-    if (!demanda.nomeDemanda) demanda.nomeDemanda = demanda.descricao || "";
-    if (!demanda.dataAtualizacao) demanda.dataAtualizacao = demanda.dataCriacao;
-    if (!demanda.criadoPor) demanda.criadoPor = demanda.funcionarioId;
-    if (!demanda.atualizadoPor) demanda.atualizadoPor = null;
-    
-    // Garante que complexidade seja um valor padrão
-    if (demanda.complexidade === "Alta") demanda.complexidade = "Difícil";
-    else if (demanda.complexidade === "Baixa") demanda.complexidade = "Fácil";
-    
-    return demanda;
-}
-
-// Modificar a função de importação para garantir que todas as demandas sejam normalizadas
-// Importar demandas
-function importarDemandas() {
-    const fileInput = document.getElementById('importFile');
-    if (!fileInput.files.length) {
-        showNotification('warning', 'Nenhum Arquivo Selecionado', 'Por favor, selecione um arquivo JSON para importar.');
-        return;
-    }
-
-    const file = fileInput.files[0];
-    const reader = new FileReader();
-
-    reader.onload = async function(event) {
-        try {
-            let importedData = JSON.parse(event.target.result);
-
-            if (!Array.isArray(importedData)) {
-                throw new Error("O arquivo JSON deve conter uma lista de demandas.");
-            }
-
-            // Normaliza cada demanda importada ANTES de qualquer processamento
-            const normalizedImportedData = importedData.map(demanda => normalizarDadosDemanda(demanda));
-
-            let updatedCount = 0;
-            let addedCount = 0;
-            let skippedCount = 0;
-
-            // Primeiro, vamos obter as demandas atuais do servidor para garantir que temos a lista mais recente
-            await carregarDadosDoServidor();
-
-            for (const demandaImportada of normalizedImportedData) {
-                const demandaExistente = todasDemandas.find(d => d.id === demandaImportada.id);
-                
-                if (demandaExistente) {
-                    const dadosAtualizados = {
-                        ...demandaImportada,
-                        id: demandaExistente.id
-                    };
-                    
-                    delete dadosAtualizados.dataCriacao;
-                    
-                    const sucesso = await atualizarDemandaNoServidor(demandaExistente.id, dadosAtualizados);
-                    
-                    if (sucesso) {
-                        updatedCount++;
-                        // Atualizar a demanda localmente
-                        Object.assign(demandaExistente, dadosAtualizados);
-                    } else {
-                        skippedCount++;
-                    }
-                } else {
-                    if (!demandaImportada.id) {
-                        demandaImportada.id = Date.now() + Math.random();
-                    }
-                    
-                    if (!demandaImportada.tag) {
-                        demandaImportada.tag = `DEM-IMP-${Date.now()}`;
-                    }
-                    
-                    const sucesso = await salvarDemandaNoServidor(demandaImportada);
-                    
-                    if (sucesso) {
-                        addedCount++;
-                        // Adicionar a demanda localmente
-                        todasDemandas.push(demandaImportada);
-                    } else {
-                        skippedCount++;
-                    }
-                }
-            }
-
-            // SUBSTITUA A PARTIR DAQUI
-            await carregarDadosDoServidor();
-            renderizarTodasAsAbas();
-            atualizarDashboard(); // Garantir que o dashboard seja atualizado
-            atualizarRanking();
-            atualizarGraficos();
-            atualizarBadges();
-            
-            let message = `Importação concluída. `;
-            if (updatedCount > 0) message += `${updatedCount} demanda(s) atualizada(s). `;
-            if (addedCount > 0) message += `${addedCount} nova(s) demanda(s) adicionada(s). `;
-            if (skippedCount > 0) message += `${skippedCount} demanda(s) ignorada(s) por erro.`;
-            
-            showNotification('success', 'Importação Concluída', message);
-            fileInput.value = '';
-
-        } catch (error) {
-            console.error('Erro ao importar o arquivo JSON:', error);
-            showNotification('error', 'Erro na Importação', `Falha ao ler o arquivo: ${error.message}. Verifique se o formato está correto.`);
-        }
-    };
-
-    reader.onerror = function() {
-        showNotification('error', 'Erro de Leitura', 'Ocorreu um erro ao ler o arquivo selecionado.');
-    };
-
-    reader.readAsText(file);
-}
-
-// Modificar a função carregarDadosDoServidor para limpar e recarregar todas as demandas
-async function carregarDadosDoServidor() {
-    try {
-        const response = await fetch(`${SERVER_URL}/api/demandas`);
-        if (response.ok) {
-            const demandasDoServidor = await response.json();
-            
-            // Limpa a lista atual de demandas
-            todasDemandas = [];
-            
-            // Normaliza os dados recebidos
-            const demandasNormalizadas = demandasDoServidor.map(demanda => normalizarDadosDemanda(demanda));
-            
-            // Adiciona todas as demandas normalizadas
-            demandasNormalizadas.forEach(demanda => {
-                todasDemandas.push(demanda);
-            });
-            
-        } else {
-            showNotification('error', 'Erro de Conexão', 'Não foi possível conectar ao servidor.');
-        }
-    } catch (error) {
-        console.error('Erro de conexão com o servidor:', error);
-        showNotification('error', 'Erro de Conexão', 'Não foi possível conectar ao servidor.');
-    }
-    
-    renderizarDemandas();
-    renderizarCobranca();
-    atualizarBadges();
-    atualizarMindmap();
-}
     // Funções de notificação
     function toggleNotificationsDropdown() {
         const dropdown = document.getElementById('notificationsDropdown');
@@ -3813,196 +3668,80 @@ async function carregarDadosDoServidor() {
     }
 
     // Obter demandas filtradas
-   function getDemandasFiltradas() {
-    let demandasBase;
-    
-    // Para gestores, mostrar TODAS as demandas do sistema no dashboard
-    if (usuarioLogado && usuarioLogado.role === 'gestor') {
-        demandasBase = todasDemandas; // Mostrar todas as demandas
-    } else {
-        demandasBase = getDemandasParaUsuarioLogado(); // Para funcionários, mostrar apenas as deles
+    function getDemandasFiltradas() {
+        let demandasBase = getDemandasParaUsuarioLogado();
+
+        if (filtroFuncionarioAtual !== 'todos') {
+            demandasBase = demandasBase.filter(d => d.funcionarioId == filtroFuncionarioAtual);
+        }
+        
+        const periodo = document.getElementById('filtroPeriodo')?.value;
+        if (periodo && periodo !== 'all') {
+            const diasAtras = parseInt(periodo);
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - diasAtras);
+            demandasBase = demandasBase.filter(d => new Date(d.dataCriacao) >= cutoffDate);
+        }
+        
+        const categoria = document.getElementById('filtroCategoria')?.value;
+        if (categoria && categoria !== 'todas') {
+            demandasBase = demandasBase.filter(d => d.categoria === categoria);
+        }
+        
+        const prioridade = document.getElementById('filtroPrioridade')?.value;
+        if (prioridade && prioridade !== 'todas') {
+            demandasBase = demandasBase.filter(d => d.prioridade === prioridade);
+        }
+        
+        return demandasBase;
     }
 
-    // Aplicar filtros adicionais
-    if (filtroFuncionarioAtual !== 'todos') {
-        demandasBase = demandasBase.filter(d => d.funcionarioId == filtroFuncionarioAtual);
-    }
-    
-    // Corrigir os IDs dos filtros para corresponder ao HTML
-    const periodo = document.getElementById('dashboardPeriodoFilter')?.value;
-    if (periodo && periodo !== 'all') {
-        const diasAtras = parseInt(periodo);
-        const cutoffDate = new Date();
-        cutoffDate.setDate(cutoffDate.getDate() - diasAtras);
-        demandasBase = demandasBase.filter(d => new Date(d.dataCriacao) >= cutoffDate);
-    }
-    
-    const categoria = document.getElementById('dashboardCategoriaFilter')?.value;
-    if (categoria && categoria !== 'todas') {
-        demandasBase = demandasBase.filter(d => d.categoria === categoria);
-    }
-    
-    const prioridade = document.getElementById('dashboardPrioridadeFilter')?.value;
-    if (prioridade && prioridade !== 'todas') {
-        demandasBase = demandasBase.filter(d => d.prioridade === prioridade);
-    }
-    
-    return demandasBase;
-}
     // Atualizar dashboard
- function atualizarDashboard() {
-    console.log('Atualizando dashboard...'); // Debug
-    console.log('Total de demandas:', todasDemandas.length); // Debug
-    
-    // Usar diretamente todasDemandas para gestores
-    let demandasBase;
-    if (usuarioLogado && usuarioLogado.role === 'gestor') {
-        demandasBase = todasDemandas; // Mostrar todas as demandas para gestores
-    } else {
-        demandasBase = getDemandasParaUsuarioLogado(); // Para funcionários, mostrar apenas as deles
-    }
-    
-    // Aplicar filtros adicionais se necessário
-    if (filtroFuncionarioAtual !== 'todos') {
-        demandasBase = demandasBase.filter(d => d.funcionarioId == filtroFuncionarioAtual);
-    }
-    
-    const periodo = document.getElementById('dashboardPeriodoFilter')?.value;
-    if (periodo && periodo !== 'all') {
-        const diasAtras = parseInt(periodo);
-        const cutoffDate = new Date();
-        cutoffDate.setDate(cutoffDate.getDate() - diasAtras);
-        demandasBase = demandasBase.filter(d => new Date(d.dataCriacao) >= cutoffDate);
-    }
-    
-    const categoria = document.getElementById('dashboardCategoriaFilter')?.value;
-    if (categoria && categoria !== 'todas') {
-        demandasBase = demandasBase.filter(d => d.categoria === categoria);
-    }
-    
-    const prioridade = document.getElementById('dashboardPrioridadeFilter')?.value;
-    if (prioridade && prioridade !== 'todas') {
-        demandasBase = demandasBase.filter(d => d.prioridade === prioridade);
-    }
-    
-    console.log('Demandas base após filtros:', demandasBase.length); // Debug
-    
-    const totalDemandas = demandasBase.length;
-    const pendentes = demandasBase.filter(d => d.status === 'pendente' || d.status === 'finalizado_pendente_aprovacao' || d.status === 'reprovada' || d.status === 'atribuida_pendente_aceitacao').length;
-    const atrasadas = demandasBase.filter(d => {
-        if (d.status === 'aprovada') return false;
-        const dataLimite = new Date(d.dataLimite);
-        const hoje = new Date();
-        return dataLimite < hoje;
-    }).length;
-    const aprovadas = demandasBase.filter(d => d.status === 'aprovada').length;
-    const rotina = demandasBase.filter(d => d.isRotina).length;
+    function atualizarDashboard() {
+        const demandasFiltradas = getDemandasFiltradas();
+        const totalDemandas = demandasFiltradas.length;
+        const pendentes = demandasFiltradas.filter(d => d.status === 'pendente' || d.status === 'finalizado_pendente_aprovacao' || d.status === 'reprovada' || d.status === 'atribuida_pendente_aceitacao').length;
+        const atrasadas = demandasFiltradas.filter(d => {
+            if (d.status === 'aprovada') return false;
+            const dataLimite = new Date(d.dataLimite);
+            const hoje = new Date();
+            return dataLimite < hoje;
+        }).length;
+        const aprovadas = demandasFiltradas.filter(d => d.status === 'aprovada').length;
+        const rotina = demandasFiltradas.filter(d => d.isRotina).length;
 
-    console.log('Totais calculados:', { totalDemandas, pendentes, atrasadas, aprovadas, rotina }); // Debug
-
-    // Função auxiliar para atualizar elemento com segurança
-    function atualizarElemento(elementId, value) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            element.textContent = value;
-            return true;
-        } else {
-            console.warn(`Elemento ${elementId} não encontrado`);
-            return false;
-        }
+        animateValue('totalDemandas', totalDemandas);
+        animateValue('pendentesCount', pendentes);
+        animateValue('atrasadasCount', atrasadas);
+        animateValue('aprovadasCount', aprovadas);
+        animateValue('rotinaCount', rotina);
     }
-
-    // Função auxiliar para atualizar estilo com segurança
-    function atualizarEstilo(elementId, property, value) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            element.style[property] = value;
-            return true;
-        } else {
-            console.warn(`Elemento ${elementId} não encontrado`);
-            return false;
-        }
-    }
-
-    // Atualizar cards do dashboard com segurança
-    animateValue('totalDemandasCard', totalDemandas);
-    animateValue('pendentesCard', pendentes);
-    animateValue('atrasadasCard', atrasadas);
-    animateValue('aprovadasCard', aprovadas);
-    animateValue('rotinaCard', rotina);
-    
-    // Atualizar percentuais com segurança
-    if (totalDemandas > 0) {
-        atualizarElemento('totalPercentual', '100%');
-        atualizarEstilo('totalProgress', 'width', '100%');
-        
-        const pendentesPercent = Math.round((pendentes / totalDemandas) * 100);
-        atualizarElemento('pendentesPercentual', `${pendentesPercent}%`);
-        atualizarEstilo('pendentesProgress', 'width', `${pendentesPercent}%`);
-        
-        const atrasadasPercent = Math.round((atrasadas / totalDemandas) * 100);
-        atualizarElemento('atrasadasPercentual', `${atrasadasPercent}%`);
-        atualizarEstilo('atrasadasProgress', 'width', `${atrasadasPercent}%`);
-        
-        const aprovadasPercent = Math.round((aprovadas / totalDemandas) * 100);
-        atualizarElemento('aprovadasPercentual', `${aprovadasPercent}%`);
-        atualizarEstilo('aprovadasProgress', 'width', `${aprovadasPercent}%`);
-        
-        const rotinaPercent = Math.round((rotina / totalDemandas) * 100);
-        atualizarElemento('rotinaPercentual', `${rotinaPercent}%`);
-        atualizarEstilo('rotinaProgress', 'width', `${rotinaPercent}%`);
-    } else {
-        atualizarElemento('totalPercentual', '0%');
-        atualizarEstilo('totalProgress', 'width', '0%');
-        atualizarElemento('pendentesPercentual', '0%');
-        atualizarEstilo('pendentesProgress', 'width', '0%');
-        atualizarElemento('atrasadasPercentual', '0%');
-        atualizarEstilo('atrasadasProgress', 'width', '0%');
-        atualizarElemento('aprovadasPercentual', '0%');
-        atualizarEstilo('aprovadasProgress', 'width', '0%');
-        atualizarElemento('rotinaPercentual', '0%');
-        atualizarEstilo('rotinaProgress', 'width', '0%');
-    }
-    
-    // Atualizar tabela de demandas recentes (com segurança)
-    try {
-        atualizarTabelaDemandasRecentes(demandasBase);
-    } catch (error) {
-        console.error('Erro ao atualizar tabela de demandas recentes:', error);
-    }
-}
 
     // Animar valor
-   function animateValue(elementId, value) {
-    const element = document.getElementById(elementId);
-    if (!element) {
-        console.warn(`Elemento ${elementId} não encontrado para animação`);
-        return;
-    }
-    
-    const current = parseInt(element.textContent) || 0;
-    const increment = value > current ? 1 : -1;
-    const duration = 500;
-    const steps = Math.abs(value - current);
-    
-    if (steps === 0) {
-        element.textContent = value;
-        return;
-    }
-    
-    const stepDuration = duration / steps;
-    let step = 0;
-    
-    const timer = setInterval(() => {
-        step++;
-        element.textContent = current + (increment * step);
+    function animateValue(elementId, value) {
+        const element = document.getElementById(elementId);
+        if (!element) return;
         
-        if (step >= steps) {
-            clearInterval(timer);
-            element.textContent = value;
-        }
-    }, stepDuration);
-}
+        const current = parseInt(element.textContent) || 0;
+        const increment = value > current ? 1 : -1;
+        const duration = 500;
+        const steps = Math.abs(value - current);
+        
+        if (steps === 0) return;
+        
+        const stepDuration = duration / steps;
+        let step = 0;
+        
+        const timer = setInterval(() => {
+            step++;
+            element.textContent = current + (increment * step);
+            
+            if (step >= steps) {
+                clearInterval(timer);
+                element.textContent = value;
+            }
+        }, stepDuration);
+    }
 
     // Inicializar gráficos
     function inicializarGraficos() {
@@ -5436,7 +5175,7 @@ async function carregarDadosDoServidor() {
                             }
                         }
                     }
-                                } else if (demanda.status === 'pendente' || demanda.status === 'finalizado_pendente_aprovacao' || demanda.status === 'reprovada' || demanda.status === 'reprovada_pelo_atribuido') {
+                               } else if (demanda.status === 'pendente' || demanda.status === 'finalizado_pendente_aprovacao' || demanda.status === 'reprovada' || demanda.status === 'reprovada_pelo_atribuido') {
                     ranking[demanda.funcionarioId].andamento++;
                 }
                 
@@ -6004,109 +5743,95 @@ async function carregarDadosDoServidor() {
     }
 
     // Importar demandas
-  async function importarDemandas() {
-    const fileInput = document.getElementById('importFile');
-    if (!fileInput.files.length) {
-        showNotification('warning', 'Nenhum Arquivo Selecionado', 'Por favor, selecione um arquivo JSON para importar.');
-        return;
+    function importarDemandas() {
+        const fileInput = document.getElementById('importFile');
+        if (!fileInput.files.length) {
+            showNotification('warning', 'Nenhum Arquivo Selecionado', 'Por favor, selecione um arquivo JSON para importar.');
+            return;
+        }
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = async function(event) {
+            try {
+                let importedData = JSON.parse(event.target.result);
+
+                if (!Array.isArray(importedData)) {
+                    throw new Error("O arquivo JSON deve conter uma lista de demandas.");
+                }
+
+                // Normaliza cada demanda importada ANTES de qualquer processamento
+                const normalizedImportedData = importedData.map(demanda => normalizarDadosDemanda(demanda));
+
+                let updatedCount = 0;
+                let addedCount = 0;
+                let skippedCount = 0;
+
+                // Primeiro, vamos obter as demandas atuais do servidor para garantir que temos a lista mais recente
+                await carregarDadosDoServidor();
+
+                for (const demandaImportada of normalizedImportedData) {
+                    const demandaExistente = todasDemandas.find(d => d.id === demandaImportada.id);
+                    
+                    if (demandaExistente) {
+                        const dadosAtualizados = {
+                            ...demandaImportada,
+                            id: demandaExistente.id
+                        };
+                        
+                        delete dadosAtualizados.dataCriacao;
+                        
+                        const sucesso = await atualizarDemandaNoServidor(demandaExistente.id, dadosAtualizados);
+                        
+                        if (sucesso) {
+                            updatedCount++;
+                        } else {
+                            skippedCount++;
+                        }
+                    } else {
+                        if (!demandaImportada.id) {
+                        demandaImportada.id = Date.now() + Math.random();
+                        }
+                        
+                        if (!demandaImportada.tag) {
+                            demandaImportada.tag = `DEM-IMP-${Date.now()}`;
+                        }
+                        
+                        const sucesso = await salvarDemandaNoServidor(demandaImportada);
+                        
+                        if (sucesso) {
+                            addedCount++;
+                        } else {
+                            skippedCount++;
+                        }
+                    }
+                }
+
+                await carregarDadosDoServidor();
+                renderizarTodasAsAbas();
+                
+                let message = `Importação concluída. `;
+                if (updatedCount > 0) message += `${updatedCount} demanda(s) atualizada(s). `;
+                if (addedCount > 0) message += `${addedCount} nova(s) demanda(s) adicionada(s). `;
+                if (skippedCount > 0) message += `${skippedCount} demanda(s) ignorada(s) por erro.`;
+                
+                showNotification('success', 'Importação Concluída', message);
+                fileInput.value = '';
+
+            } catch (error) {
+                console.error('Erro ao importar o arquivo JSON:', error);
+                showNotification('error', 'Erro na Importação', `Falha ao ler o arquivo: ${error.message}. Verifique se o formato está correto.`);
+            }
+        };
+
+        reader.onerror = function() {
+            showNotification('error', 'Erro de Leitura', 'Ocorreu um erro ao ler o arquivo selecionado.');
+        };
+
+        reader.readAsText(file);
     }
 
-    const file = fileInput.files[0];
-    const reader = new FileReader();
-
-    reader.onload = async function(event) {
-        try {
-            let importedData = JSON.parse(event.target.result);
-
-            if (!Array.isArray(importedData)) {
-                throw new Error("O arquivo JSON deve conter uma lista de demandas.");
-            }
-
-            // Normaliza cada demanda importada
-            const normalizedImportedData = importedData.map(demanda => normalizarDadosDemanda(demanda));
-
-            let addedCount = 0;
-
-            // Limpar demandas existentes e adicionar todas as importadas
-            todasDemandas = [];
-            
-            for (const demandaImportada of normalizedImportedData) {
-                // Garantir que a demanda tenha todos os campos necessários
-                if (!demandaImportada.id) {
-                    demandaImportada.id = Date.now() + Math.random();
-                }
-                
-                if (!demandaImportada.tag) {
-                    demandaImportada.tag = `DEM-IMP-${Date.now()}`;
-                }
-                
-                // Adicionar diretamente ao array local
-                todasDemandas.push(demandaImportada);
-                addedCount++;
-            }
-
-            console.log('Demandas após importação:', todasDemandas.length); // Debug
-
-            // ATUALIZAR A INTERFACE APÓS A IMPORTAÇÃO COM UM PEQUENO ATRASO
-            setTimeout(() => {
-                renderizarTodasAsAbas();
-                atualizarDashboard(); // Forçar atualização do dashboard
-                atualizarRanking();
-                atualizarGraficos();
-                atualizarBadges();
-                
-                // Forçar atualização novamente após um pequeno delay
-                setTimeout(() => {
-                    atualizarDashboard();
-                    console.log('Segunda atualização do dashboard'); // Debug
-                }, 200);
-            }, 100); // Pequeno atraso para garantir que o DOM esteja pronto
-            
-            let message = `Importação concluída. `;
-            if (addedCount > 0) message += `${addedCount} nova(s) demanda(s) adicionada(s). `;
-            
-            showNotification('success', 'Importação Concluída', message);
-            fileInput.value = '';
-
-        } catch (error) {
-            console.error('Erro ao importar o arquivo JSON:', error);
-            showNotification('error', 'Erro na Importação', `Falha ao ler o arquivo: ${error.message}. Verifique se o formato está correto.`);
-        }
-    };
-
-    reader.onerror = function() {
-        showNotification('error', 'Erro de Leitura', 'Ocorreu um erro ao ler o arquivo selecionado.');
-    };
-
-    reader.readAsText(file);
-}
-// Adicionar esta função no final do seu código
-function forcarAtualizacaoDashboardAoMudarAba() {
-    // Adicionar um event listener para a aba do dashboard
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-            if (this.textContent.includes('Dashboard')) {
-                setTimeout(() => {
-                    atualizarDashboard();
-                    console.log('Dashboard atualizado ao mudar para aba'); // Debug
-                }, 100);
-            }
-        });
-    });
-}
-
-// Chamar esta função quando a página carregar
-document.addEventListener('DOMContentLoaded', function() {
-    // ... seu código existente ...
-    forcarAtualizacaoDashboardAoMudarAba();
-});
-function forcarAtualizacaoCards() {
-    // Forçar atualização imediata dos valores dos cards
-    setTimeout(() => {
-        atualizarDashboard();
-        console.log('Forçando atualização dos cards...'); // Debug
-    }, 100);
-}
     // Mapa Mental - Funções atualizadas
     function atualizarMindmap() {
         const mindmapArea = document.getElementById('mindmapArea');
