@@ -5927,7 +5927,8 @@ function verDetalhes(id) {
 
     // Importar demandas
    // Modifique a função importarDemandas() para ficar assim:
-function importarDemandas() {
+// Importar demandas
+async function importarDemandas() {
     const fileInput = document.getElementById('importFile');
     if (!fileInput.files.length) {
         showNotification('warning', 'Nenhum Arquivo Selecionado', 'Por favor, selecione um arquivo JSON para importar.');
@@ -5951,6 +5952,10 @@ function importarDemandas() {
             let updatedCount = 0;
             let addedCount = 0;
             let skippedCount = 0;
+            let savedToServerCount = 0;
+
+            // Mostrar notificação de início da importação
+            showNotification('info', 'Importação Iniciada', `Processando ${normalizedImportedData.length} demanda(s)...`);
 
             // Primeiro, vamos obter as demandas atuais do servidor para garantir que temos a lista mais recente
             await carregarDadosDoServidor();
@@ -5978,6 +5983,17 @@ function importarDemandas() {
                     todasDemandas.push(demandaImportada);
                     addedCount++;
                 }
+
+                // SALVAR NO SERVIDOR - Esta é a parte que faltava!
+                try {
+                    const sucesso = await salvarDemandaNoServidor(demandaImportada);
+                    if (sucesso) {
+                        savedToServerCount++;
+                    }
+                } catch (error) {
+                    console.error('Erro ao salvar demanda importada no servidor:', error);
+                    skippedCount++;
+                }
             }
 
             // Força a atualização completa da interface
@@ -5990,9 +6006,15 @@ function importarDemandas() {
             let message = `Importação concluída. `;
             if (updatedCount > 0) message += `${updatedCount} demanda(s) atualizada(s). `;
             if (addedCount > 0) message += `${addedCount} nova(s) demanda(s) adicionada(s). `;
+            if (savedToServerCount > 0) message += `${savedToServerCount} salva(s) no servidor. `;
             if (skippedCount > 0) message += `${skippedCount} demanda(s) ignorada(s) por erro.`;
             
-            showNotification('success', 'Importação Concluída', message);
+            if (savedToServerCount > 0) {
+                showNotification('success', 'Importação Concluída com Sucesso', message);
+            } else {
+                showNotification('warning', 'Importação Concluída com Alertas', message);
+            }
+            
             fileInput.value = '';
 
         } catch (error) {
@@ -6007,7 +6029,6 @@ function importarDemandas() {
 
     reader.readAsText(file);
 }
-
     // Mapa Mental - Funções atualizadas
     function atualizarMindmap() {
         const mindmapArea = document.getElementById('mindmapArea');
