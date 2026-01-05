@@ -2811,11 +2811,11 @@
     { id: 7, nome: 'Marcelo Goncalves de Paula', email: 'marcelo-p@zaminebrasil.com', nivel: 'Senior', pontos: 480, conquistas: ['star', 'fire', 'gold'], senha: '123456', role: 'funcionario' },
     { id: 8, nome: 'Higor Ataides Macedo', email: 'higor-a@zaminebrasil.com', nivel: 'Junior', pontos: 250, conquistas: ['star'], senha: '123456', role: 'funcionario' },
     { id: 9, nome: 'Weslley Ferreira de Siqueira', email: 'weslley-f@zaminebrasil.com', nivel: 'Pleno', pontos: 360, conquistas: ['star', 'silver'], senha: '123456', role: 'funcionario' },
-    { id: 10, nome: 'Jadson Joao Romano', email: 'jadson-r@zaminebrasil.com', nivel: 'Senior', pontos: 440, conquistas: ['star', 'fire', 'gold'], senha: '123456', role: 'gestor' }, // Alterado para gestor
+    { id: 10, nome: 'Jadson Joao Romano', email: 'jadson-r@zaminebrasil.com', nivel: 'Senior', pontos: 440, conquistas: ['star', 'fire', 'gold'], senha: 'admin123', role: 'gestor' }, // Alterado para gestor
     { id: 11, nome: 'Charles de Andrade', email: 'charles-a@zaminebrasil.com', nivel: 'Pleno', pontos: 390, conquistas: ['star', 'silver'], senha: '123456', role: 'funcionario' },
     { id: 12, nome: 'Jose Carlos Rodrigues de Santana', email: 'jose-s@zaminebrasil.com', nivel: 'Junior', pontos: 220, conquistas: ['star'], senha: '123456', role: 'funcionario' },
     { id: 13, nome: 'Max Henrique Araujo', email: 'max-r@zaminebrasil.com', nivel: 'Pleno', pontos: 340, conquistas: ['star', 'silver'], senha: '123456', role: 'funcionario' },
-    { id: 14, nome: 'Emerson Luiz Alexandre', email: 'emerson-a@zaminebrasil.com', nivel: 'Senior', pontos: 460, conquistas: ['star', 'fire', 'gold'], senha: '123456', role: 'gestor' }, // Novo gestor adicionado
+    { id: 14, nome: 'Emerson Luiz Alexandre', email: 'emerson-a@zaminebrasil.com', nivel: 'Senior', pontos: 460, conquistas: ['star', 'fire', 'gold'], senha: 'admin123', role: 'gestor' }, // Novo gestor adicionado
     { id: 99, nome: 'Gestor do Sistema', email: 'wallysson-s@zaminebrasil.com', nivel: 'Administrador', pontos: 999, conquistas: ['star', 'fire', 'gold', 'crown'], senha: 'admin123', role: 'gestor' },
     { id: 100, nome: 'Wallysson Diego Santiago Santos', email: 'wallysson-s@zaminebrasil.com', nivel: 'Coordenador', pontos: 999, conquistas: ['star', 'fire', 'gold', 'crown'], senha: 'admin123', role: 'gestor' },
     { id: 101, nome: 'Julio Cesar Sanches', email: 'julio-s@zaminebrasil.com', nivel: 'Gerente', pontos: 999, conquistas: ['star', 'fire', 'gold', 'crown'], senha: 'admin123', role: 'gestor' }
@@ -4128,37 +4128,33 @@
 
     // Notificar partes interessadas sobre nova demanda
     // Notificar partes interessadas sobre nova demanda
+// Notificar partes interessadas sobre nova demanda
 function notificarPartesInteressadasNovaDemanda(demanda) {
-    // Encontrar todos os gestores
-    const gestores = usuarios.filter(u => u.role === 'gestor');
+    // Definir gestores por local
+    const gestoresPorLocal = {
+        'R&D': ['jadson-r@zaminebrasil.com', 'emerson-a@zaminebrasil.com'],
+        'Lundin': ['wallysson-s@zaminebrasil.com']
+    };
     
-    // Verificar se a demanda é para o local R&D
-    const isRD = demanda.local === 'R&D';
+    // Obter gestores específicos para o local da demanda
+    const gestoresLocal = gestoresPorLocal[demanda.local] || [];
     
-    // Se for R&D, incluir Jadson e Emerson nas notificações
-    const gestoresRD = isRD ? gestores.filter(g => 
-        g.email === 'jadson-r@zaminebrasil.com' || 
-        g.email === 'emerson-a@zaminebrasil.com'
-    ) : [];
-
     if (usuarioLogado.role === 'gestor') {
         if (demanda.atribuidos && demanda.atribuidos.length > 0) {
             const emailsPara = demanda.atribuidos.map(a => a.email).join(',');
             const assunto = encodeURIComponent(`Nova Tarefa: ${demanda.nomeDemanda}`);
             const corpo = encodeURIComponent(`Prezado(a),\n\nUma nova tarefa foi atribuída a você pelo Gestor:\n\n--- Detalhes da Tarefa ---\nNome: ${demanda.nomeDemanda}\nDescrição: ${demanda.descricao}\nCategoria: ${demanda.categoria}\nPrioridade: ${demanda.prioridade}\nLocal: ${demanda.local}\nData Limite: ${new Date(demanda.dataLimite).toLocaleDateString('pt-BR')}\nTAG: ${demanda.tag}\n\nPor favor, acesse o sistema para começar a trabalhar.\n\nAtenciosamente,\nGestor do Sistema`);
-            window.open(`mailto:${emailsPara}?subject=${assunto}&body=${corpo}`, '_blank');
-        }
-        
-        // Se for R&D, enviar notificação para os gestores específicos
-        if (isRD && gestoresRD.length > 0) {
-            const emailsGestoresRD = gestoresRD.map(g => g.email).join(',');
-            const assuntoGestor = encodeURIComponent(`Nova Demanda R&D: ${demanda.nomeDemanda}`);
-            const corpoGestor = encodeURIComponent(`Prezado Gestor,\n\nUma nova demanda foi criada para o local R&D:\n\n--- Detalhes da Demanda ---\nNome: ${demanda.nomeDemanda}\nDescrição: ${demanda.descricao}\nCategoria: ${demanda.categoria}\nPrioridade: ${demanda.prioridade}\nLocal: ${demanda.local}\nData Limite: ${new Date(demanda.dataLimite).toLocaleDateString('pt-BR')}\nTAG: ${demanda.tag}\n\nPor favor, acesse o sistema para acompanhamento.\n\nAtenciosamente,\nSistema Automático`);
-            window.open(`mailto:${emailsGestoresRD}?subject=${assuntoGestor}&body=${corpoGestor}`, '_blank');
+            
+            let mailtoLink = `mailto:${emailsPara}?subject=${assunto}&body=${corpo}`;
+            // Adicionar gestores do local em CC
+            if (gestoresLocal.length > 0) {
+                mailtoLink += `&cc=${gestoresLocal.join(',')}`;
+            }
+            window.open(mailtoLink, '_blank');
         }
     } else {
-        // Para funcionários, notificar todos os gestores
-        if (gestores.length > 0) {
+        // Para funcionários, notificar apenas os gestores do local específico
+        if (gestoresLocal.length > 0) {
             const emailsCc = demanda.atribuidos && demanda.atribuidos.length > 0 ? demanda.atribuidos.map(a => a.email).join(',') : '';
             const assunto = encodeURIComponent(`Nova Demanda Registrada: ${demanda.nomeDemanda}`);
             let corpo = `Prezado Gestor,\n\nUma nova demanda foi registrada por ${demanda.nomeFuncionario}:\n\n--- Detalhes da Demanda ---\nNome: ${demanda.nomeDemanda}\nDescrição: ${demanda.descricao}\nCategoria: ${demanda.categoria}\nPrioridade: ${demanda.prioridade}\nLocal: ${demanda.local}\nData Limite: ${new Date(demanda.dataLimite).toLocaleDateString('pt-BR')}\nTAG: ${demanda.tag}\n`;
@@ -4169,18 +4165,7 @@ function notificarPartesInteressadasNovaDemanda(demanda) {
 
             corpo += `\nPor favor, acesse o sistema para análise.\n\nAtenciosamente,\nSistema Automático`;
 
-            // Se for R&D, garantir que Jadson e Emerson sejam incluídos
-            let emailsPara = gestores.map(g => g.email).join(',');
-            if (isRD) {
-                const emailsRD = ['jadson-r@zaminebrasil.com', 'emerson-a@zaminebrasil.com'];
-                emailsRD.forEach(email => {
-                    if (!emailsPara.includes(email)) {
-                        emailsPara += ',' + email;
-                    }
-                });
-            }
-
-            let mailtoLink = `mailto:${emailsPara}?subject=${assunto}&body=${encodeURIComponent(corpo)}`;
+            let mailtoLink = `mailto:${gestoresLocal.join(',')}?subject=${assunto}&body=${encodeURIComponent(corpo)}`;
             if (emailsCc) {
                 mailtoLink += `&cc=${emailsCc}`;
             }
@@ -4229,6 +4214,7 @@ function notificarPartesInteressadasNovaDemanda(demanda) {
 
     // Salvar resolução
    // Salvar resolução
+// Salvar resolução
 async function salvarResolucao() {
     if (!demandaResolucaoAtual) {
         showNotification('error', 'Erro', 'Nenhuma demanda selecionada para resolução.');
@@ -4285,33 +4271,24 @@ async function salvarResolucao() {
             // Redirecionar para a aba de análise para todos os usuários
             switchTab('analise');
 
-            const gestor = usuarios.find(u => u.role === 'gestor');
-            if(gestor) {
-                // Adicionar notificação para o gestor
+            // Definir gestores por local
+            const gestoresPorLocal = {
+                'R&D': ['jadson-r@zaminebrasil.com', 'emerson-a@zaminebrasil.com'],
+                'Lundin': ['wallysson-s@zaminebrasil.com']
+            };
+            
+            // Obter gestores específicos para o local da demanda
+            const gestoresLocal = gestoresPorLocal[demandaResolucaoAtual.local] || [];
+            
+            if(gestoresLocal.length > 0) {
+                // Adicionar notificação para os gestores do local
                 addUserNotification('info', 'Demanda para Aprovar', `A demanda "${demandaResolucaoAtual.nomeDemanda}" foi resolvida e espera sua aprovação.`, { tag: demandaResolucaoAtual.tag });
                 
-                // Verificar se a demanda é do local R&D
-                const isRD = demandaResolucaoAtual.local === 'R&D';
-                
-                // Preparar emails
-                let emailsPara = gestor.email;
-                let emailsCc = '';
-                
-                // Se for R&D, incluir Jadson e Emerson em CC
-                if (isRD) {
-                    const emailsRD = ['jadson-r@zaminebrasil.com', 'emerson-a@zaminebrasil.com'];
-                    emailsCc = emailsRD.join(',');
-                }
-                
-                // Enviar email para o gestor principal
+                // Enviar email para os gestores do local
                 const assunto = encodeURIComponent(`Demanda Resolvida para Aprovação: ${demandaResolucaoAtual.nomeDemanda}`);
-                const corpo = encodeURIComponent(`Prezado Gestor,\n\nA demanda "${demandaResolucaoAtual.nomeDemanda}" foi resolvida por ${demandaResolucaoAtual.nomeFuncionario} e está aguardando sua aprovação.\n\n--- Detalhes da Demanda ---\nNome: ${demandaResolucaoAtual.nomeDemanda}\nTAG: ${demandaResolucaoAtual.tag}\n\n--- Comentários do Funcionário ---\n${comentarios}\n\nPor favor, acesse o sistema para aprovar ou reprovar esta demanda.\n\nAtenciosamente,\nSistema de Gestão de Demandas`);
+                const corpo = encodeURIComponent(`Prezado Gestor,\n\nA demanda "${demandaResolucaoAtual.nomeDemanda}" foi resolvida por ${demandaResolucaoAtual.nomeFuncionario} e está aguardando sua aprovação.\n\n--- Detalhes da Demanda ---\nNome: ${demandaResolucaoAtual.nomeDemanda}\nTAG: ${demandaResolucaoAtual.tag}\nLocal: ${demandaResolucaoAtual.local}\n\n--- Comentários do Funcionário ---\n${comentarios}\n\nPor favor, acesse o sistema para aprovar ou reprovar esta demanda.\n\nAtenciosamente,\nSistema de Gestão de Demandas`);
                 
-                let mailtoLink = `mailto:${emailsPara}?subject=${assunto}&body=${corpo}`;
-                if (emailsCc) {
-                    mailtoLink += `&cc=${emailsCc}`;
-                }
-                window.open(mailtoLink, '_blank');
+                window.open(`mailto:${gestoresLocal.join(',')}?subject=${assunto}&body=${corpo}`, '_blank');
             }
             
             showNotification('success', 'Resolução Salva', `A resolução foi salva e a demanda agora está em análise.`);
@@ -4326,6 +4303,7 @@ async function salvarResolucao() {
 
     // Salvar reprovação (sem necessidade de senha)
    // Salvar reprovação (sem necessidade de senha)
+// Salvar reprovação (sem necessidade de senha)
 async function salvarReprovacao() {
     if (!demandaReprovacaoAtual) return;
 
@@ -4352,8 +4330,14 @@ async function salvarReprovacao() {
     const sucesso = await atualizarDemandaNoServidor(demandaReprovacaoAtual.id, dadosAtualizados);
 
     if (sucesso) {
-        // Verificar se a demanda é do local R&D
-        const isRD = demandaReprovacaoAtual.local === 'R&D';
+        // Definir gestores por local
+        const gestoresPorLocal = {
+            'R&D': ['jadson-r@zaminebrasil.com', 'emerson-a@zaminebrasil.com'],
+            'Lundin': ['wallysson-s@zaminebrasil.com']
+        };
+        
+        // Obter gestores específicos para o local da demanda
+        const gestoresLocal = gestoresPorLocal[demandaReprovacaoAtual.local] || [];
         
         const actionText = extendDeadline ? 'reprovada com prazo estendido' : 'reprovada';
         showNotification('warning', `Demanda ${actionText}`, `A demanda foi ${actionText} e o solicitante será notificado.`);
@@ -4377,10 +4361,9 @@ async function salvarReprovacao() {
             let emailsPara = funcionario.email;
             let emailsCc = '';
             
-            // Se for R&D, incluir Jadson e Emerson em CC
-            if (isRD) {
-                const emailsRD = ['jadson-r@zaminebrasil.com', 'emerson-a@zaminebrasil.com'];
-                emailsCc = emailsRD.join(',');
+            // Adicionar gestores do local em CC
+            if (gestoresLocal.length > 0) {
+                emailsCc = gestoresLocal.join(',');
             }
             
             let mailtoLink = `mailto:${emailsPara}?subject=${assunto}&body=${encodeURIComponent(corpo)}`;
@@ -4395,6 +4378,7 @@ async function salvarReprovacao() {
 
     demandaReprovacaoAtual = null;
 }
+
     // Alternar extensão de prazo
     function toggleDeadlineExtension() {
         const checkbox = document.getElementById('extendDeadline');
@@ -5046,64 +5030,80 @@ async function salvarReprovacao() {
 
     // Aprovar demanda (sem necessidade de senha)
    // Aprovar demanda (sem necessidade de senha)
-async function aprovarDemanda(id, nomeFuncionario) {
-    if (!confirm('Tem certeza que deseja aprovar esta demanda?')) return;
-    const demanda = todasDemandas.find(d => d.id === id);
-    if (demanda) {
-        const dadosAtualizados = {
-            status: 'aprovada',
-            dataConclusao: new Date().toISOString()
+// Salvar reprovação (sem necessidade de senha)
+async function salvarReprovacao() {
+    if (!demandaReprovacaoAtual) return;
+
+    const motivo = document.getElementById('motivoReprovacao').value;
+    const extendDeadline = document.getElementById('extendDeadline').checked;
+    const novaDataLimite = document.getElementById('novaDataLimite').value;
+
+    if (!motivo) {
+        showNotification('warning', 'Motivo Obrigatório', 'Por favor, informe o motivo da reprovação.');
+        return;
+    }
+
+    const dadosAtualizados = {
+        status: 'reprovada',
+        comentarioGestor: motivo,
+        dataConclusao: new Date().toISOString()
+    };
+
+    if (extendDeadline && novaDataLimite) {
+        dadosAtualizados.dataLimite = novaDataLimite;
+        dadosAtualizados.status = 'pendente';
+    }
+
+    const sucesso = await atualizarDemandaNoServidor(demandaReprovacaoAtual.id, dadosAtualizados);
+
+    if (sucesso) {
+        // Definir gestores por local
+        const gestoresPorLocal = {
+            'R&D': ['jadson-r@zaminebrasil.com', 'emerson-a@zaminebrasil.com'],
+            'Lundin': ['wallysson-s@zaminebrasil.com']
         };
         
-        const sucesso = await atualizarDemandaNoServidor(id, dadosAtualizados);
+        // Obter gestores específicos para o local da demanda
+        const gestoresLocal = gestoresPorLocal[demandaReprovacaoAtual.local] || [];
         
-        if (sucesso) {
-            await carregarDadosDoServidor();
-            showNotification('success', 'Demanda Aprovada', `Demanda de ${nomeFuncionario} foi aprovada com sucesso!`);
+        const actionText = extendDeadline ? 'reprovada com prazo estendido' : 'reprovada';
+        showNotification('warning', `Demanda ${actionText}`, `A demanda foi ${actionText} e o solicitante será notificado.`);
+        closeModal('reprovacaoModal');
+        await carregarDadosDoServidor();
+
+        const funcionario = usuarios.find(u => u.id === demandaReprovacaoAtual.funcionarioId);
+        if (funcionario) {
+            const assunto = encodeURIComponent(`Sua Demanda Foi ${actionText}: ${demandaReprovacaoAtual.nomeDemanda}`);
+            let corpo = `Prezado(a) ${demandaReprovacaoAtual.nomeFuncionario},\n\nSua demanda foi analisada e ${actionText}.\n\n--- Motivo ---\n${motivo}\n\n`;
             
-            // Verificar se a demanda é do local R&D
-            const isRD = demanda.local === 'R&D';
-            
-            const funcionario = usuarios.find(u => u.id === demanda.funcionarioId);
-            if (funcionario) {
-                const assunto = encodeURIComponent(`Sua Demanda Foi Aprovada: ${demanda.nomeDemanda || demanda.descricao}`);
-                const corpo = encodeURIComponent(`Prezado(a) ${nomeFuncionario},\n\nSua demanda foi analisada e aprovada.\n\n--- Detalhes ---\nNome: ${demanda.nomeDemanda || demanda.descricao}\nTAG: ${demanda.tag}\n\nParabéns pelo excelente trabalho!\n\nAtenciosamente,\nGestão`);
-                
-                // Preparar emails
-                let emailsPara = funcionario.email;
-                let emailsCc = '';
-                
-                // Se for R&D, incluir Jadson e Emerson em CC
-                if (isRD) {
-                    const emailsRD = ['jadson-r@zaminebrasil.com', 'emerson-a@zaminebrasil.com'];
-                    emailsCc = emailsRD.join(',');
-                }
-                
-                let mailtoLink = `mailto:${emailsPara}?subject=${assunto}&body=${corpo}`;
-                if (emailsCc) {
-                    mailtoLink += `&cc=${emailsCc}`;
-                }
-                window.open(mailtoLink, '_blank');
-                
-                addUserNotification('success', 'Demanda Aprovada', `Sua demanda "${demanda.nomeDemanda}" foi aprovada!`, { tag: demanda.tag });
+            if (extendDeadline && novaDataLimite) {
+                corpo += `--- Novo Prazo ---\n${new Date(novaDataLimite).toLocaleDateString('pt-BR')}\n\nPor favor, revise e ajuste sua demanda conforme necessário.\n\n`;
+            } else {
+                corpo += `Por favor, crie uma nova demanda com os ajustes necessários.\n\n`;
             }
             
-            // Notificar também os atribuídos
-            if (demanda.atribuidos && Array.isArray(demanda.atribuidos)) {
-                demanda.atribuidos.forEach(atribuido => {
-                    if (atribuido.id !== demanda.funcionarioId) {
-                        const usuarioAtribuido = usuarios.find(u => u.id === atribuido.id);
-                        if (usuarioAtribuido) {
-                            addUserNotification('success', 'Demanda Aprovada', 
-                                `A demanda "${demanda.nomeDemanda}" foi aprovada!`, 
-                                { tag: demanda.tag }
-                            );
-                        }
-                    }
-                });
+            corpo += `Atenciosamente,\nGestão`;
+            
+            // Preparar emails
+            let emailsPara = funcionario.email;
+            let emailsCc = '';
+            
+            // Adicionar gestores do local em CC
+            if (gestoresLocal.length > 0) {
+                emailsCc = gestoresLocal.join(',');
             }
+            
+            let mailtoLink = `mailto:${emailsPara}?subject=${assunto}&body=${encodeURIComponent(corpo)}`;
+            if (emailsCc) {
+                mailtoLink += `&cc=${emailsCc}`;
+            }
+            window.open(mailtoLink, '_blank');
+
+            addUserNotification('warning', `Demanda ${actionText}`, `Sua demanda "${demandaReprovacaoAtual.nomeDemanda}" foi ${actionText}.`, { tag: demandaReprovacaoAtual.tag });
         }
     }
+
+    demandaReprovacaoAtual = null;
 }
     // Ver detalhes
     function verDetalhes(id) {
