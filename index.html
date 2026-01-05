@@ -3787,34 +3787,153 @@ async function carregarDadosDoServidor() {
     }
 
     // Obter demandas filtradas
-    function getDemandasFiltradas() {
-        let demandasBase = getDemandasParaUsuarioLogado();
-
-        if (filtroFuncionarioAtual !== 'todos') {
-            demandasBase = demandasBase.filter(d => d.funcionarioId == filtroFuncionarioAtual);
-        }
-        
-        const periodo = document.getElementById('filtroPeriodo')?.value;
-        if (periodo && periodo !== 'all') {
-            const diasAtras = parseInt(periodo);
-            const cutoffDate = new Date();
-            cutoffDate.setDate(cutoffDate.getDate() - diasAtras);
-            demandasBase = demandasBase.filter(d => new Date(d.dataCriacao) >= cutoffDate);
-        }
-        
-        const categoria = document.getElementById('filtroCategoria')?.value;
-        if (categoria && categoria !== 'todas') {
-            demandasBase = demandasBase.filter(d => d.categoria === categoria);
-        }
-        
-        const prioridade = document.getElementById('filtroPrioridade')?.value;
-        if (prioridade && prioridade !== 'todas') {
-            demandasBase = demandasBase.filter(d => d.prioridade === prioridade);
-        }
-        
-        return demandasBase;
+    // Substitua a função getDemandasFiltradasDashboard por esta versão corrigida
+function getDemandasFiltradasDashboard() {
+    let demandasBase;
+    
+    // Para gestores, mostrar TODAS as demandas do sistema no dashboard
+    if (usuarioLogado && usuarioLogado.role === 'gestor') {
+        demandasBase = todasDemandas; // Mostrar todas as demandas
+    } else {
+        demandasBase = getDemandasParaUsuarioLogado(); // Para funcionários, mostrar apenas as deles
     }
 
+    // Aplicar filtros adicionais
+    if (filtroFuncionarioAtual !== 'todos') {
+        demandasBase = demandasBase.filter(d => d.funcionarioId == filtroFuncionarioAtual);
+    }
+    
+    const periodo = document.getElementById('dashboardPeriodoFilter')?.value;
+    if (periodo && periodo !== 'all') {
+        const diasAtras = parseInt(periodo);
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - diasAtras);
+        demandasBase = demandasBase.filter(d => new Date(d.dataCriacao) >= cutoffDate);
+    }
+    
+    const categoria = document.getElementById('dashboardCategoriaFilter')?.value;
+    if (categoria && categoria !== 'todas') {
+        demandasBase = demandasBase.filter(d => d.categoria === categoria);
+    }
+    
+    const prioridade = document.getElementById('dashboardPrioridadeFilter')?.value;
+    if (prioridade && prioridade !== 'todas') {
+        demandasBase = demandasBase.filter(d => d.prioridade === prioridade);
+    }
+    
+    return demandasBase;
+}
+
+// Também precisamos corrigir a função de importação para atualizar o dashboard após a importação
+async function importarDemandas() {
+    const fileInput = document.getElementById('importFile');
+    if (!fileInput.files.length) {
+        showNotification('warning', 'Nenhum Arquivo Selecionado', 'Por favor, selecione um arquivo JSON para importar.');
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onload = async function(event) {
+        try {
+            let importedData = JSON.parse(event.target.result);
+
+            if (!Array.isArray(importedData)) {
+                throw new Error("O arquivo JSON deve conter uma lista de demandas.");
+            }
+
+            // Normaliza cada demanda importada ANTES de qualquer processamento
+            const normalizedImportedData = importedData.map(demanda => normalizarDadosDemanda(demanda));
+
+            let updatedCount = 0;
+            let addedCount = 0;
+            let skippedCount = 0;
+
+            // Primeiro, vamos obter as demandas atuais do servidor para garantir que temos a lista mais recente
+            await carregarDadosDoServidor();
+
+            for (const demandaImportada of normalizedImportedData) {
+                const demandaExistente = todasDemandas.find(d => d.id === demandaImportada.id);
+                
+                if (demandaExistente) {
+                    const dadosAtualizados = {
+                        ...demandaImportada,
+                        id: demandaExistente.id
+                    };
+                    
+                    delete dadosAtualizados.dataCriacao;
+                    
+                    const sucesso = await atualizarDemandaNoServidor(demandaExistente.id, dadosAtualizados);
+                    
+                    if (sucesso) {
+                        updatedCount++;
+                        // Atualizar a demanda localmente
+                        Object.assign(demandaExistente, dadosAtualizados);
+                    } else {
+                        skippedCount++;
+                    }
+                } else {
+                    if (!demandaImportada.id) {
+                        demandaImportada.id = Date.now() + Math.random();
+                    }
+                    
+                    if (!demandaImportada.tag) {
+                        demandaImportada.tag = `DEM-IMP-${Date.now()}`;
+                    }
+                    
+                    const sucesso = await salvarDemandaNoServidor(demandaImportada);
+                    
+                    if (sucesso) {
+                        addedCount++;
+                        // Adicionar a demanda localmente
+                        todasDemandas.push(demandaImportada);
+                    } else {
+                        skippedCount++;
+                    }
+                }
+            }
+
+            // Atualizar a interface após a importação
+            renderizarTodasAsAbas();
+            atualizarDashboard(); // Forçar atualização do dashboard
+            atualizarRanking();
+            atualizarGraficos();
+            atualizarBadges();
+            
+            let message = `Importação concluída. `;
+            if (updatedCount > 0) message += `${updatedCount} demanda(s) atualizada(s). `;
+            if (addedCount > 0) message += `${addedCount} nova(s) demanda(s) adicionada(s). `;
+            if (skippedCount > 0) message += `${skippedCount} demanda(s) ignorada(s) por erro.`;
+            
+            showNotification('success', 'Importação Concluída', message);
+            fileInput.value = '';
+
+        } catch (error) {
+            console.error('Erro ao importar o arquivo JSON:', error);
+            showNotification('error', 'Erro na Importação', `Falha ao ler o arquivo: ${error.message}. Verifique se o formato está correto.`);
+        }
+    };
+
+    reader.onerror = function() {
+        showNotification('error', 'Erro de Leitura', 'Ocorreu um erro ao ler o arquivo selecionado.');
+    };
+
+    reader.readAsText(file);
+}
+
+// Também precisamos garantir que a função renderizarTodasAsAbas inclua a atualização do dashboard
+function renderizarTodasAsAbas() {
+    renderizarDemandas();
+    renderizarAnalise();
+    renderizarAtrasadas();
+    renderizarAprovadas();
+    renderizarPendentesColaboradores();
+    renderizarCobranca();
+    atualizarDashboard(); // Garantir que o dashboard seja atualizado
+    atualizarRanking();
+    atualizarGraficos();
+}
     // Atualizar dashboard
     function atualizarDashboard() {
         const demandasFiltradas = getDemandasFiltradas();
