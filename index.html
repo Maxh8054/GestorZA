@@ -5155,44 +5155,44 @@ async function salvarReprovacao() {
     demandaReprovacaoAtual = null;
 }
     // Ver detalhes
-    function verDetalhes(id) {
-        const demanda = todasDemandas.find(d => d.id === id);
-        if (!demanda) return;
-        
-        // Normaliza os dados antes de exibir
-        demanda = normalizarDadosDemanda(demanda);
-        
-        let tempoInfo = '';
-        if (demanda.status === 'aprovada' && demanda.dataConclusao) {
-            tempoInfo = `<p><strong>Desempenho de Tempo:</strong> ${calcularDesempenhoTempo(demanda.dataCriacao, demanda.dataConclusao, demanda.dataLimite)}</p>`;
-        }
-        
-        let atribuidosInfo = '';
-        // A verificação agora é segura, pois normalizarDadosDemanda garante que é um array
-        if (Array.isArray(demanda.atribuidos) && demanda.atribuidos.length > 0) {
-            atribuidosInfo = `<p><strong>Atribuída a:</strong> ${demanda.atribuidos.map(a => a.nome).join(', ')}</p>`;
-        }
-        
-        const content = `
-            <div class="demanda-details">
-                <h3>${demanda.nomeDemanda || demanda.descricao}</h3>
-                <p><strong>Funcionário:</strong> ${demanda.nomeFuncionario}</p>
-                <p><strong>Categoria:</strong> ${demanda.categoria}</p>
-                <p><strong>Status:</strong> ${demanda.status}</p>
-                <p><strong>Data Limite:</strong> ${new Date(demanda.dataLimite).toLocaleDateString('pt-BR')}</p>
-                <p><strong>Data Criação:</strong> ${new Date(demanda.dataCriacao).toLocaleDateString('pt-BR')}</p>
-                ${demanda.dataConclusao ? `<p><strong>Data Conclusão:</strong> ${new Date(demanda.dataConclusao).toLocaleDateString('pt-BR')}</p>` : ''}
-                ${tempoInfo}
-                ${demanda.comentarios ? `<p><strong>Comentários do Funcionário:</strong> ${demanda.comentarios}</p>` : ''}
-                ${demanda.comentarioGestor ? `<p><strong>Comentário do Gestor:</strong> ${demanda.comentarioGestor}</p>` : ''}
-                ${demanda.comentarioReprovacaoAtribuicao ? `<p><strong>Motivo da Reprovação:</strong> ${demanda.comentarioReprovacaoAtribuicao}</p>` : ''}
-                ${demanda.isRotina ? `<p><strong>Tipo:</strong> Tarefa de Rotina</p>` : ''}
-                ${atribuidosInfo}
-            </div>
-        `;
-        
-        showModal('detailModal', 'Detalhes da Demanda', content);
+   // Ver detalhes
+function verDetalhes(id) {
+    const demanda = todasDemandas.find(d => d.id === id);
+    if (!demanda) return;
+    
+    // Normaliza os dados antes de exibir (criando uma nova constante)
+    const demandaNormalizada = normalizarDadosDemanda(demanda);
+    
+    let tempoInfo = '';
+    if (demandaNormalizada.status === 'aprovada' && demandaNormalizada.dataConclusao) {
+        tempoInfo = `<p><strong>Desempenho de Tempo:</strong> ${calcularDesempenhoTempo(demandaNormalizada.dataCriacao, demandaNormalizada.dataConclusao, demandaNormalizada.dataLimite)}</p>`;
     }
+    
+    let atribuidosInfo = '';
+    if (Array.isArray(demandaNormalizada.atribuidos) && demandaNormalizada.atribuidos.length > 0) {
+        atribuidosInfo = `<p><strong>Atribuída a:</strong> ${demandaNormalizada.atribuidos.map(a => a.nome).join(', ')}</p>`;
+    }
+    
+    const content = `
+        <div class="demanda-details">
+            <h3>${demandaNormalizada.nomeDemanda || demandaNormalizada.descricao}</h3>
+            <p><strong>Funcionário:</strong> ${demandaNormalizada.nomeFuncionario}</p>
+            <p><strong>Categoria:</strong> ${demandaNormalizada.categoria}</p>
+            <p><strong>Status:</strong> ${demandaNormalizada.status}</p>
+            <p><strong>Data Limite:</strong> ${new Date(demandaNormalizada.dataLimite).toLocaleDateString('pt-BR')}</p>
+            <p><strong>Data Criação:</strong> ${new Date(demandaNormalizada.dataCriacao).toLocaleDateString('pt-BR')}</p>
+            ${demandaNormalizada.dataConclusao ? `<p><strong>Data Conclusão:</strong> ${new Date(demandaNormalizada.dataConclusao).toLocaleDateString('pt-BR')}</p>` : ''}
+            ${tempoInfo}
+            ${demandaNormalizada.comentarios ? `<p><strong>Comentários do Funcionário:</strong> ${demandaNormalizada.comentarios}</p>` : ''}
+            ${demandaNormalizada.comentarioGestor ? `<p><strong>Comentário do Gestor:</strong> ${demandaNormalizada.comentarioGestor}</p>` : ''}
+            ${demandaNormalizada.comentarioReprovacaoAtribuicao ? `<p><strong>Motivo da Reprovação:</strong> ${demandaNormalizada.comentarioReprovacaoAtribuicao}</p>` : ''}
+            ${demandaNormalizada.isRotina ? `<p><strong>Tipo:</strong> Tarefa de Rotina</p>` : ''}
+            ${atribuidosInfo}
+        </div>
+    `;
+    
+    showModal('detailModal', 'Detalhes da Demanda', content);
+}
 
     // Calcular tempo restante
     function calcularTempoRestante(dataLimite) {
