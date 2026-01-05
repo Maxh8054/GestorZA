@@ -3851,7 +3851,12 @@ async function carregarDadosDoServidor() {
 }
     // Atualizar dashboard
    function atualizarDashboard() {
-    const demandasFiltradas = getDemandasFiltradas(); // Usar a função corrigida
+    console.log('Atualizando dashboard...'); // Debug
+    console.log('Total de demandas:', todasDemandas.length); // Debug
+    
+    const demandasFiltradas = getDemandasFiltradas();
+    console.log('Demandas filtradas:', demandasFiltradas.length); // Debug
+    
     const totalDemandas = demandasFiltradas.length;
     const pendentes = demandasFiltradas.filter(d => d.status === 'pendente' || d.status === 'finalizado_pendente_aprovacao' || d.status === 'reprovada' || d.status === 'atribuida_pendente_aceitacao').length;
     const atrasadas = demandasFiltradas.filter(d => {
@@ -3863,7 +3868,8 @@ async function carregarDadosDoServidor() {
     const aprovadas = demandasFiltradas.filter(d => d.status === 'aprovada').length;
     const rotina = demandasFiltradas.filter(d => d.isRotina).length;
 
-    // Resto da função permanece o mesmo...
+    console.log('Totais calculados:', { totalDemandas, pendentes, atrasadas, aprovadas, rotina }); // Debug
+
     // Atualizar cards do dashboard
     animateValue('totalDemandasCard', totalDemandas);
     animateValue('pendentesCard', pendentes);
@@ -3871,34 +3877,73 @@ async function carregarDadosDoServidor() {
     animateValue('aprovadasCard', aprovadas);
     animateValue('rotinaCard', rotina);
     
-    // Resto da função...
+    // Atualizar percentuais
+    if (totalDemandas > 0) {
+        document.getElementById('totalPercentual').textContent = '100%';
+        document.getElementById('totalProgress').style.width = '100%';
+        
+        const pendentesPercent = Math.round((pendentes / totalDemandas) * 100);
+        document.getElementById('pendentesPercentual').textContent = `${pendentesPercent}%`;
+        document.getElementById('pendentesProgress').style.width = `${pendentesPercent}%`;
+        
+        const atrasadasPercent = Math.round((atrasadas / totalDemandas) * 100);
+        document.getElementById('atrasadasPercentual').textContent = `${atrasadasPercent}%`;
+        document.getElementById('atrasadasProgress').style.width = `${atrasadasPercent}%`;
+        
+        const aprovadasPercent = Math.round((aprovadas / totalDemandas) * 100);
+        document.getElementById('aprovadasPercentual').textContent = `${aprovadasPercent}%`;
+        document.getElementById('aprovadasProgress').style.width = `${aprovadasPercent}%`;
+        
+        const rotinaPercent = Math.round((rotina / totalDemandas) * 100);
+        document.getElementById('rotinaPercentual').textContent = `${rotinaPercent}%`;
+        document.getElementById('rotinaProgress').style.width = `${rotinaPercent}%`;
+    } else {
+        document.getElementById('totalPercentual').textContent = '0%';
+        document.getElementById('totalProgress').style.width = '0%';
+        document.getElementById('pendentesPercentual').textContent = '0%';
+        document.getElementById('pendentesProgress').style.width = '0%';
+        document.getElementById('atrasadasPercentual').textContent = '0%';
+        document.getElementById('atrasadasProgress').style.width = '0%';
+        document.getElementById('aprovadasPercentual').textContent = '0%';
+        document.getElementById('aprovadasProgress').style.width = '0%';
+        document.getElementById('rotinaPercentual').textContent = '0%';
+        document.getElementById('rotinaProgress').style.width = '0%';
+    }
+    
+    // Atualizar tabela de demandas recentes
+    atualizarTabelaDemandasRecentes(demandasFiltradas);
 }
     // Animar valor
     function animateValue(elementId, value) {
-        const element = document.getElementById(elementId);
-        if (!element) return;
-        
-        const current = parseInt(element.textContent) || 0;
-        const increment = value > current ? 1 : -1;
-        const duration = 500;
-        const steps = Math.abs(value - current);
-        
-        if (steps === 0) return;
-        
-        const stepDuration = duration / steps;
-        let step = 0;
-        
-        const timer = setInterval(() => {
-            step++;
-            element.textContent = current + (increment * step);
-            
-            if (step >= steps) {
-                clearInterval(timer);
-                element.textContent = value;
-            }
-        }, stepDuration);
+    const element = document.getElementById(elementId);
+    if (!element) {
+        console.log(`Elemento ${elementId} não encontrado`); // Debug
+        return;
     }
-
+    
+    const current = parseInt(element.textContent) || 0;
+    const increment = value > current ? 1 : -1;
+    const duration = 500;
+    const steps = Math.abs(value - current);
+    
+    if (steps === 0) {
+        element.textContent = value;
+        return;
+    }
+    
+    const stepDuration = duration / steps;
+    let step = 0;
+    
+    const timer = setInterval(() => {
+        step++;
+        element.textContent = current + (increment * step);
+        
+        if (step >= steps) {
+            clearInterval(timer);
+            element.textContent = value;
+        }
+    }, stepDuration);
+}
     // Inicializar gráficos
     function inicializarGraficos() {
         if (typeof Chart === 'undefined') {
@@ -5899,95 +5944,84 @@ async function carregarDadosDoServidor() {
     }
 
     // Importar demandas
-    function importarDemandas() {
-        const fileInput = document.getElementById('importFile');
-        if (!fileInput.files.length) {
-            showNotification('warning', 'Nenhum Arquivo Selecionado', 'Por favor, selecione um arquivo JSON para importar.');
-            return;
-        }
-
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-
-        reader.onload = async function(event) {
-            try {
-                let importedData = JSON.parse(event.target.result);
-
-                if (!Array.isArray(importedData)) {
-                    throw new Error("O arquivo JSON deve conter uma lista de demandas.");
-                }
-
-                // Normaliza cada demanda importada ANTES de qualquer processamento
-                const normalizedImportedData = importedData.map(demanda => normalizarDadosDemanda(demanda));
-
-                let updatedCount = 0;
-                let addedCount = 0;
-                let skippedCount = 0;
-
-                // Primeiro, vamos obter as demandas atuais do servidor para garantir que temos a lista mais recente
-                await carregarDadosDoServidor();
-
-                for (const demandaImportada of normalizedImportedData) {
-                    const demandaExistente = todasDemandas.find(d => d.id === demandaImportada.id);
-                    
-                    if (demandaExistente) {
-                        const dadosAtualizados = {
-                            ...demandaImportada,
-                            id: demandaExistente.id
-                        };
-                        
-                        delete dadosAtualizados.dataCriacao;
-                        
-                        const sucesso = await atualizarDemandaNoServidor(demandaExistente.id, dadosAtualizados);
-                        
-                        if (sucesso) {
-                            updatedCount++;
-                        } else {
-                            skippedCount++;
-                        }
-                    } else {
-                        if (!demandaImportada.id) {
-                        demandaImportada.id = Date.now() + Math.random();
-                        }
-                        
-                        if (!demandaImportada.tag) {
-                            demandaImportada.tag = `DEM-IMP-${Date.now()}`;
-                        }
-                        
-                        const sucesso = await salvarDemandaNoServidor(demandaImportada);
-                        
-                        if (sucesso) {
-                            addedCount++;
-                        } else {
-                            skippedCount++;
-                        }
-                    }
-                }
-
-                await carregarDadosDoServidor();
-                renderizarTodasAsAbas();
-                
-                let message = `Importação concluída. `;
-                if (updatedCount > 0) message += `${updatedCount} demanda(s) atualizada(s). `;
-                if (addedCount > 0) message += `${addedCount} nova(s) demanda(s) adicionada(s). `;
-                if (skippedCount > 0) message += `${skippedCount} demanda(s) ignorada(s) por erro.`;
-                
-                showNotification('success', 'Importação Concluída', message);
-                fileInput.value = '';
-
-            } catch (error) {
-                console.error('Erro ao importar o arquivo JSON:', error);
-                showNotification('error', 'Erro na Importação', `Falha ao ler o arquivo: ${error.message}. Verifique se o formato está correto.`);
-            }
-        };
-
-        reader.onerror = function() {
-            showNotification('error', 'Erro de Leitura', 'Ocorreu um erro ao ler o arquivo selecionado.');
-        };
-
-        reader.readAsText(file);
+   async function importarDemandas() {
+    const fileInput = document.getElementById('importFile');
+    if (!fileInput.files.length) {
+        showNotification('warning', 'Nenhum Arquivo Selecionado', 'Por favor, selecione um arquivo JSON para importar.');
+        return;
     }
 
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onload = async function(event) {
+        try {
+            let importedData = JSON.parse(event.target.result);
+
+            if (!Array.isArray(importedData)) {
+                throw new Error("O arquivo JSON deve conter uma lista de demandas.");
+            }
+
+            // Normaliza cada demanda importada
+            const normalizedImportedData = importedData.map(demanda => normalizarDadosDemanda(demanda));
+
+            let updatedCount = 0;
+            let addedCount = 0;
+            let skippedCount = 0;
+
+            // Limpar demandas existentes e adicionar todas as importadas
+            todasDemandas = [];
+            
+            for (const demandaImportada of normalizedImportedData) {
+                // Garantir que a demanda tenha todos os campos necessários
+                if (!demandaImportada.id) {
+                    demandaImportada.id = Date.now() + Math.random();
+                }
+                
+                if (!demandaImportada.tag) {
+                    demandaImportada.tag = `DEM-IMP-${Date.now()}`;
+                }
+                
+                // Adicionar diretamente ao array local
+                todasDemandas.push(demandaImportada);
+                addedCount++;
+            }
+
+            console.log('Demandas após importação:', todasDemandas.length); // Debug
+
+            // ATUALIZAR A INTERFACE APÓS A IMPORTAÇÃO
+            renderizarTodasAsAbas();
+            atualizarDashboard(); // Forçar atualização do dashboard
+            atualizarRanking();
+            atualizarGraficos();
+            atualizarBadges();
+            
+            let message = `Importação concluída. `;
+            if (addedCount > 0) message += `${addedCount} nova(s) demanda(s) adicionada(s). `;
+            if (skippedCount > 0) message += `${skippedCount} demanda(s) ignorada(s) por erro.`;
+            
+            showNotification('success', 'Importação Concluída', message);
+            fileInput.value = '';
+
+        } catch (error) {
+            console.error('Erro ao importar o arquivo JSON:', error);
+            showNotification('error', 'Erro na Importação', `Falha ao ler o arquivo: ${error.message}. Verifique se o formato está correto.`);
+        }
+    };
+
+    reader.onerror = function() {
+        showNotification('error', 'Erro de Leitura', 'Ocorreu um erro ao ler o arquivo selecionado.');
+    };
+
+    reader.readAsText(file);
+}
+function forcarAtualizacaoCards() {
+    // Forçar atualização imediata dos valores dos cards
+    setTimeout(() => {
+        atualizarDashboard();
+        console.log('Forçando atualização dos cards...'); // Debug
+    }, 100);
+}
     // Mapa Mental - Funções atualizadas
     function atualizarMindmap() {
         const mindmapArea = document.getElementById('mindmapArea');
