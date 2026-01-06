@@ -2909,7 +2909,77 @@
         // Inicializar reconhecimento de fala
         inicializarReconhecimentoFala();
     });
-
+// Função global para aprovar demanda
+function aprovarDemanda(id, nomeFuncionario) {
+    if (!confirm('Tem certeza que deseja aprovar esta demanda?')) return;
+    
+    const demanda = todasDemandas.find(d => d.id === id);
+    if (demanda) {
+        const dadosAtualizados = {
+            status: 'aprovada',
+            dataConclusao: new Date().toISOString()
+        };
+        
+        atualizarDemandaNoServidor(id, dadosAtualizados).then(sucesso => {
+            if (sucesso) {
+                carregarDadosDoServidor().then(() => {
+                    showNotification('success', 'Demanda Aprovada', `Demanda de ${nomeFuncionario} foi aprovada com sucesso!`);
+                    
+                    // Definir gestores por local
+                    const gestoresPorLocal = {
+                        'R&D': ['jadson-r@zaminebrasil.com', 'emerson-a@zaminebrasil.com'],
+                        'Lundin': ['wallysson-s@zaminebrasil.com']
+                    };
+                    
+                    // Obter gestores específicos para o local da demanda
+                    const gestoresLocal = gestoresPorLocal[demanda.local] || [];
+                    
+                    const funcionario = usuarios.find(u => u.id === demanda.funcionarioId);
+                    if (funcionario) {
+                        const assunto = encodeURIComponent(`Sua Demanda Foi Aprovada: ${demanda.nomeDemanda || demanda.descricao}`);
+                        const corpo = encodeURIComponent(`Prezado(a) ${nomeFuncionario},\n\nSua demanda foi analisada e aprovada.\n\n--- Detalhes ---\nNome: ${demanda.nomeDemanda || demanda.descricao}\nTAG: ${demanda.tag}\nLocal: ${demanda.local}\n\nParabéns pelo excelente trabalho!\n\nAtenciosamente,\nGestão`);
+                        
+                        // Preparar emails
+                        let emailsPara = funcionario.email;
+                        let emailsCc = '';
+                        
+                        // Adicionar gestores do local em CC
+                        if (gestoresLocal.length > 0) {
+                            emailsCc = gestoresLocal.join(',');
+                        }
+                        
+                        let mailtoLink = `mailto:${emailsPara}?subject=${assunto}&body=${corpo}`;
+                        if (emailsCc) {
+                            mailtoLink += `&cc=${emailsCc}`;
+                        }
+                        window.open(mailtoLink, '_blank');
+                        
+                        if (userNotifications) {
+                            addUserNotification('success', 'Demanda Aprovada', `Sua demanda "${demanda.nomeDemanda}" foi aprovada!`, { tag: demanda.tag });
+                        }
+                    }
+                    
+                    // Notificar também os atribuídos
+                    if (demanda.atribuidos && Array.isArray(demanda.atribuidos)) {
+                        demanda.atribuidos.forEach(atribuido => {
+                            if (atribuido.id !== demanda.funcionarioId) {
+                                const usuarioAtribuido = usuarios.find(u => u.id === atribuido.id);
+                                if (usuarioAtribuido && userNotifications) {
+                                    addUserNotification('success', 'Demanda Aprovada', 
+                                        `A demanda "${demanda.nomeDemanda}" foi aprovada!`, 
+                                        { tag: demanda.tag }
+                                    );
+                                }
+                            }
+                        });
+                    }
+                    
+                    renderizarTodasAsAbas();
+                });
+            }
+        });
+    }
+}
     // Função para inicializar o reconhecimento de fala
     function inicializarReconhecimentoFala() {
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
