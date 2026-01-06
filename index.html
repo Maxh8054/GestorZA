@@ -12,6 +12,33 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <style>
+        
+        /* Estilizar opções de gestores no multi-select */
+.multi-select-option label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.multi-select-option .fa-user-shield {
+    color: #f39c12;
+}
+
+.multi-select-option .fa-user {
+    color: #3498db;
+}
+
+/* Destaque para gestores selecionados */
+.selected-item:has(.fa-user-shield) {
+    background-color: rgba(243, 156, 18, 0.2);
+    border: 1px solid rgba(243, 156, 18, 0.5);
+}
+
+.selected-item:has(.fa-user) {
+    background-color: rgba(52, 152, 219, 0.2);
+    border: 1px solid rgba(52, 152, 219, 0.5);
+}
         :root {
             --primary-color: #2c3e50;
             --secondary-color: #1a252f;
@@ -1878,6 +1905,142 @@
     -ms-user-select: auto;
     user-select: auto;
 }
+/* Adicione ao seu arquivo CSS */
+button.info {
+    background-color: var(--info-color);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+button.info:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+button.info::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+button.info:active::before {
+    width: 300px;
+    height: 300px;
+}
+/* Indicador de comentários */
+.comentario-indicator {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: var(--info-color);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.comentario-indicator:hover {
+    transform: scale(1.1);
+    background: #2980b9;
+}
+
+.comentario-indicator .badge-count {
+    background: var(--warning-color);
+    color: white;
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    position: absolute;
+    top: -2px;
+    right: -2px;
+}
+
+/* Badge de comentários na lista */
+.demanda-item.has-comentarios {
+    border-left: 5px solid var(--info-color);
+    position: relative;
+}
+
+.demanda-item.has-comentarios::after {
+    content: '💬';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 16px;
+    opacity: 0.7;
+}
+
+/* Contador de comentários no detalhe */
+.comentarios-count {
+    background: var(--info-color);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: 10px;
+}
+/* Botão de editar */
+button.editar {
+    background-color: var(--warning-color);
+    color: white;
+    padding: 5px 10px;
+    font-size: 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button.editar:hover {
+    background-color: #e67e22;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+button.editar::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+button.editar:active::before {
+    width: 300px;
+    height: 300px;
+}
     </style>
 </head>
 <body>
@@ -1886,6 +2049,7 @@
     <i class="fas fa-circle"></i> <span id="serverStatusText">Verificando servidor...</span>
 </div>
 
+<!-- Container de Login -->
 <!-- Container de Login -->
 <div class="login-container" id="loginContainer">
     <div class="login-card">
@@ -1901,10 +2065,20 @@
         <form class="login-form" id="loginForm">
             <div class="form-group">
                 <label for="userSelect">Selecione seu nome:</label>
-                <select id="userSelect" required>
+                <select id="userSelect" required onchange="checkIfGestor()">
                     <option value="">Clique para selecionar...</option>
                 </select>
             </div>
+            
+            <!-- FILTRO PARA GESTORES (INICIALMENTE OCULTO) -->
+            <!-- FILTRO PARA GESTORES (INICIALMENTE OCULTO) -->
+<div class="form-group" id="gestorViewFilter" style="display: none;">
+    <label for="viewType">Tipo de Visão:</label>
+    <select id="viewType">
+        <option value="geral">Visão Geral</option>
+        <option value="proprio">Próprio</option>
+    </select>
+</div>
             
             <div class="form-group">
                 <label for="passwordInput">Senha:</label>
@@ -2017,30 +2191,40 @@
                     <p>Sistema Avançado de Gestão de Demandas</p>
                 </div>
             </div>
-            <div class="header-controls">
-                <div class="user-badge" id="userBadge">
-                    <i class="fas fa-user"></i>
-                    <span id="userName">Carregando...</span>
-                </div>
-                <div style="position: relative;">
-                    <button onclick="toggleNotificationsDropdown()" title="Notificações">
-                        <i class="fas fa-bell"></i>
-                        <span class="badge" id="notificationCount">0</span>
-                    </button>
-                    <div id="notificationsDropdown" class="notifications-dropdown">
-                        <div class="notifications-header">
-                            <span>Notificações</span>
-                            <button class="clear-notifications-btn" onclick="clearAllNotifications()">Limpar</button>
-                        </div>
-                        <div id="notificationsList">
-                            <p style="padding: 15px; text-align: center; color: #aaa;">Nenhuma notificação</p>
-                        </div>
-                    </div>
-                </div>
-                <button onclick="logout()" title="Sair">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
+           <!-- Adicionar no header-controls -->
+<div class="header-controls">
+    <div class="user-badge" id="userBadge">
+        <i class="fas fa-user"></i>
+        <span id="userName">Carregando...</span>
+    </div>
+    
+    <!-- CONTROLE DE VISÃO PARA GESTORES -->
+    <div id="viewToggle" style="display: none; margin-right: 10px;">
+        <select id="viewTypeToggle" onchange="changeViewType()" style="padding: 5px; border-radius: 4px; border: 1px solid #ccc;">
+            <option value="geral">Visão Geral</option>
+            <option value="proprio">Próprio</option>
+        </select>
+    </div>
+    
+    <div style="position: relative;">
+        <button onclick="toggleNotificationsDropdown()" title="Notificações">
+            <i class="fas fa-bell"></i>
+            <span class="badge" id="notificationCount">0</span>
+        </button>
+        <div id="notificationsDropdown" class="notifications-dropdown">
+            <div class="notifications-header">
+                <span>Notificações</span>
+                <button class="clear-notifications-btn" onclick="clearAllNotifications()">Limpar</button>
             </div>
+            <div id="notificationsList">
+                <p style="padding: 15px; text-align: center; color: #aaa;">Nenhuma notificação</p>
+            </div>
+        </div>
+    </div>
+    <button onclick="logout()" title="Sair">
+        <i class="fas fa-sign-out-alt"></i>
+    </button>
+</div>
         </header>
 
         <main>
@@ -2298,13 +2482,14 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="localSelect">Local:</label>
-                                <select id="localSelect" required>
-                                    <option value="">Selecione...</option>
-                                    <option value="Lundin">Lundin</option>
-                                    <option value="R&D">R&D</option>
-                                </select>
-                            </div>
+    <label for="localSelect">Local:</label>
+    <select id="localSelect" required>
+        <option value="">Selecione...</option>
+        <option value="Lundin">Lundin</option>
+        <option value="R&D">R&D</option>
+        <option value="U&M">U&M</option>
+    </select>
+</div>
                         </div>
                         <div class="form-group">
                             <label for="atribuidoASelect">Atribuir a:</label>
@@ -2500,11 +2685,12 @@
                             <select id="mindmapFuncFilter" onchange="filterMindmap()">
                                 <option value="todos">Todos os Funcionários</option>
                             </select>
-                            <select id="mindmapLocalFilter" onchange="filterMindmap()">
-                                <option value="todos">Todos os Locais</option>
-                                <option value="Lundin">Lundin</option>
-                                <option value="R&D">R&D</option>
-                            </select>
+                           <select id="mindmapLocalFilter" onchange="filterMindmap()">
+    <option value="todos">Todos os Locais</option>
+    <option value="Lundin">Lundin</option>
+    <option value="R&D">R&D</option>
+    <option value="U&M">U&M</option>
+</select>
                             <select id="mindmapSort" onchange="sortMindmap()">
                                 <option value="prioridade">Ordenar por Prioridade</option>
                                 <option value="dataLimite">Ordenar por Data Limite</option>
@@ -2588,11 +2774,13 @@
                             <select id="colabFuncFilter" onchange="filterColabDemandas()">
                                 <option value="todos">Todos os Funcionários</option>
                             </select>
-                            <select id="colabLocalFilter" onchange="filterColabDemandas()">
-                                <option value="todos">Todos os Locais</option>
-                                <option value="Lundin">Lundin</option>
-                                <option value="R&D">R&D</option>
-                            </select>
+                          <!-- Filtro de local em "Pendentes Colaboradores" -->
+<select id="colabLocalFilter" onchange="filterColabDemandas()">
+    <option value="todos">Todos os Locais</option>
+    <option value="Lundin">Lundin</option>
+    <option value="R&D">R&D</option>
+    <option value="U&M">U&M</option>
+</select>
                             <div class="date-filter-container">
                                 <div class="year-filter">
                                     <label for="colabYearFilter">Ano:</label>
@@ -2690,7 +2878,162 @@
         </main>
     </div>
 </div>
-
+<!-- Adicione este modal após os outros modais existentes -->
+<div id="comentarioModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('comentarioModal')">&times;</span>
+        <h2 id="comentarioModalTitle">Adicionar Comentário</h2>
+        <form id="comentarioForm">
+            <div class="form-group">
+                <label for="comentarioText">Comentário:</label>
+                <textarea id="comentarioText" rows="5" required placeholder="Digite seu comentário..."></textarea>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="success"><i class="fas fa-comment"></i> Adicionar Comentário</button>
+                <button type="button" class="secondary" onclick="closeModal('comentarioModal')"><i class="fas fa-times"></i> Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- Modal de Edição de Demanda -->
+<div id="editarDemandaModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('editarDemandaModal')">&times;</span>
+        <h2 id="editarDemandaModalTitle">Editar Demanda</h2>
+        <form id="editarDemandaForm">
+            <div class="form-group">
+                <label for="editarNomeDemanda">Nome da Demanda:</label>
+                <input type="text" id="editarNomeDemanda" required placeholder="Dê um nome claro para a demanda">
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="editarCategoria">Categoria:</label>
+                    <div class="category-search">
+                        <input type="text" id="editarCategoria" placeholder="Digite ou selecione uma categoria" required oninput="filtrarCategoriasEditar()">
+                        <button type="button" onclick="toggleCategoryDropdownEditar()"><i class="fas fa-chevron-down"></i></button>
+                        <div id="editarCategoryDropdown" class="category-dropdown">
+                            <div class="category-option" onclick="selectCategoryEditar('Comercial / Negócio')">Comercial / Negócio</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Vendas')">Vendas</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Pós-venda')">Pós-venda</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Negociação')">Negociação</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Proposta / Orçamento')">Proposta / Orçamento</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Follow-up')">Follow-up</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Fidelização')">Fidelização</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Gestão / Administrativo')">Gestão / Administrativo</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Planejamento')">Planejamento</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Gestão de Projetos')">Gestão de Projetos</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Alinhamento Interno')">Alinhamento Interno</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Tomada de Decisão')">Tomada de Decisão</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Auditoria')">Auditoria</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Compliance')">Compliance</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Técnico / Operacional')">Técnico / Operacional</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Manutenção')">Manutenção</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Implantação')">Implantação</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Testes')">Testes</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Correção de Erros')">Correção de Erros</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Monitoramento')">Monitoramento</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Otimização')">Otimização</div>
+                            <div class="category-option" onclick="selectCategoryEditar('TI / Dados')">TI / Dados</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Análise de Dados')">Análise de Dados</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Automação')">Automação</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Integração de Sistemas')">Integração de Sistemas</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Infraestrutura')">Infraestrutura</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Segurança')">Segurança</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Backup')">Backup</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Comunicação')">Comunicação</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Apresentação')">Apresentação</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Treinamento')">Treinamento</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Documentação')">Documentação</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Feedback')">Feedback</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Atendimento')">Atendimento</div>
+                            <div class="category-option" onclick="selectCategoryEditar('Outros')">Outros</div>
+                        </div>
+                    </div>
+                    <div id="editarCustomCategoryInput" class="custom-category-input">
+                        <input type="text" id="editarCustomCategory" placeholder="Digite uma nova categoria">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="editarPrioridade">Prioridade:</label>
+                    <select id="editarPrioridade" required>
+                        <option value="">Selecione...</option>
+                        <option value="Importante">Importante</option>
+                        <option value="Média">Média</option>
+                        <option value="Relevante">Relevante</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editarComplexidade">Complexidade:</label>
+                    <select id="editarComplexidade" required>
+                        <option value="">Selecione...</option>
+                        <option value="Fácil">Fácil</option>
+                        <option value="Médio">Médio</option>
+                        <option value="Difícil">Difícil</option>
+                    </select>
+                </div>
+                <div class="form-group">
+    <label for="editarLocal">Local:</label>
+    <select id="editarLocal" required>
+        <option value="">Selecione...</option>
+        <option value="Lundin">Lundin</option>
+        <option value="R&D">R&D</option>
+        <option value="U&M">U&M</option>
+    </select>
+</div>
+            </div>
+            <div class="form-group">
+                <label for="editarAtribuidos">Atribuir a:</label>
+                <div class="multi-select-container" id="editarAtribuidosContainer">
+                    <div class="multi-select-display" id="editarAtribuidosDisplay" onclick="toggleMultiSelectEditar('editarAtribuidos')">
+                        <span style="color: #999;">Clique para selecionar funcionários...</span>
+                    </div>
+                    <div class="multi-select-dropdown" id="editarAtribuidosDropdown">
+                        <!-- Opções serão preenchidas dinamicamente -->
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="editarDescricao">Descrição da Demanda:</label>
+                <textarea id="editarDescricao" rows="3" required placeholder="Descreva detalhadamente a demanda..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="editarDataLimite">Data Limite:</label>
+                <input type="date" id="editarDataLimite" readonly style="background: #f0f0f0; cursor: not-allowed;">
+                <small style="color: #666; display: block; margin-top: 5px;">
+                    <i class="fas fa-info-circle"></i> A data limite não pode ser alterada após a criação da demanda.
+                </small>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="editarRotina" onchange="toggleRoutineFieldsEditar()">
+                <label for="editarRotina">Esta é uma tarefa de rotina</label>
+            </div>
+            
+            <div class="dias-semana-group" id="editarDiasSemanaGroup">
+                <label>Selecione os dias da semana:</label>
+                <div>
+                    <label><input type="checkbox" name="editarDiaSemana" value="0"> Domingo</label>
+                    <label><input type="checkbox" name="editarDiaSemana" value="1"> Segunda-feira</label>
+                    <label><input type="checkbox" name="editarDiaSemana" value="2"> Terça-feira</label>
+                    <label><input type="checkbox" name="editarDiaSemana" value="3"> Quarta-feira</label>
+                    <label><input type="checkbox" name="editarDiaSemana" value="4"> Quinta-feira</label>
+                    <label><input type="checkbox" name="editarDiaSemana" value="5"> Sexta-feira</label>
+                    <label><input type="checkbox" name="editarDiaSemana" value="6"> Sábado</label>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="success">
+                    <i class="fas fa-save"></i> Salvar Alterações
+                </button>
+                <button type="button" class="secondary" onclick="closeModal('editarDemandaModal')">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 <div id="resolucaoModal" class="modal">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal('resolucaoModal')">&times;</span>
@@ -2848,7 +3191,7 @@
 
 <script>
     // Variáveis globais
-  const usuarios = [
+ const usuarios = [
     { id: 1, nome: 'Ranielly Miranda De Souza', email: 'ranielly-s@zaminebrasil.com', nivel: 'Senior', pontos: 450, conquistas: ['star', 'fire', 'gold'], senha: '123456', role: 'funcionario' },
     { id: 2, nome: 'Girlene da Silva Nogueira', email: 'girlene-n@zaminebrasil.com', nivel: 'Pleno', pontos: 380, conquistas: ['star', 'silver'], senha: '123456', role: 'funcionario' },
     { id: 3, nome: 'Rafaela Cristine da Silva Martins', email: 'rafaela-m@zaminebrasil.com', nivel: 'Senior', pontos: 520, conquistas: ['star', 'fire', 'gold'], senha: '123456', role: 'funcionario' },
@@ -2857,11 +3200,14 @@
     { id: 7, nome: 'Marcelo Goncalves de Paula', email: 'marcelo-p@zaminebrasil.com', nivel: 'Senior', pontos: 480, conquistas: ['star', 'fire', 'gold'], senha: '123456', role: 'funcionario' },
     { id: 8, nome: 'Higor Ataides Macedo', email: 'higor-a@zaminebrasil.com', nivel: 'Junior', pontos: 250, conquistas: ['star'], senha: '123456', role: 'funcionario' },
     { id: 9, nome: 'Weslley Ferreira de Siqueira', email: 'weslley-f@zaminebrasil.com', nivel: 'Pleno', pontos: 360, conquistas: ['star', 'silver'], senha: '123456', role: 'funcionario' },
-    { id: 10, nome: 'Jadson Joao Romano', email: 'jadson-r@zaminebrasil.com', nivel: 'Senior', pontos: 440, conquistas: ['star', 'fire', 'gold'], senha: 'admin123', role: 'gestor' }, // Alterado para gestor
+    { id: 10, nome: 'Jadson Joao Romano', email: 'jadson-r@zaminebrasil.com', nivel: 'Senior', pontos: 440, conquistas: ['star', 'fire', 'gold'], senha: 'admin123', role: 'gestor' },
     { id: 11, nome: 'Charles de Andrade', email: 'charles-a@zaminebrasil.com', nivel: 'Pleno', pontos: 390, conquistas: ['star', 'silver'], senha: '123456', role: 'funcionario' },
     { id: 12, nome: 'Jose Carlos Rodrigues de Santana', email: 'jose-s@zaminebrasil.com', nivel: 'Junior', pontos: 220, conquistas: ['star'], senha: '123456', role: 'funcionario' },
     { id: 13, nome: 'Max Henrique Araujo', email: 'max-r@zaminebrasil.com', nivel: 'Pleno', pontos: 340, conquistas: ['star', 'silver'], senha: '123456', role: 'funcionario' },
-    { id: 14, nome: 'Emerson Luiz Alexandre', email: 'emerson-a@zaminebrasil.com', nivel: 'Senior', pontos: 460, conquistas: ['star', 'fire', 'gold'], senha: 'admin123', role: 'gestor' }, // Novo gestor adicionado
+    { id: 14, nome: 'Emerson Luiz Alexandre', email: 'emerson-a@zaminebrasil.com', nivel: 'Senior', pontos: 460, conquistas: ['star', 'fire', 'gold'], senha: 'admin123', role: 'gestor' },
+    // NOVOS USUÁRIOS - U&M
+    { id: 15, nome: 'Warlen Eduardo Pereira Silva', email: 'warlen-s@zaminebrasil.com', nivel: 'Pleno', pontos: 350, conquistas: ['star', 'silver'], senha: '123456', role: 'funcionario' },
+    { id: 16, nome: 'Cicero de Sousa Costa', email: 'cicero-c@zaminebrasil.com', nivel: 'Senior', pontos: 420, conquistas: ['star', 'fire', 'gold'], senha: '123456', role: 'funcionario' },
     { id: 99, nome: 'Gestor do Sistema', email: 'wallysson-s@zaminebrasil.com', nivel: 'Administrador', pontos: 999, conquistas: ['star', 'fire', 'gold', 'crown'], senha: 'admin123', role: 'gestor' },
     { id: 100, nome: 'Wallysson Diego Santiago Santos', email: 'wallysson-s@zaminebrasil.com', nivel: 'Coordenador', pontos: 999, conquistas: ['star', 'fire', 'gold', 'crown'], senha: 'admin123', role: 'gestor' },
     { id: 101, nome: 'Julio Cesar Sanches', email: 'julio-s@zaminebrasil.com', nivel: 'Gerente', pontos: 999, conquistas: ['star', 'fire', 'gold', 'crown'], senha: 'admin123', role: 'gestor' }
@@ -2910,6 +3256,7 @@
         inicializarReconhecimentoFala();
     });
 // Função global para aprovar demanda
+// Adicione esta lógica na função aprovarDemanda
 function aprovarDemanda(id, nomeFuncionario) {
     if (!confirm('Tem certeza que deseja aprovar esta demanda?')) return;
     
@@ -2925,10 +3272,11 @@ function aprovarDemanda(id, nomeFuncionario) {
                 carregarDadosDoServidor().then(() => {
                     showNotification('success', 'Demanda Aprovada', `Demanda de ${nomeFuncionario} foi aprovada com sucesso!`);
                     
-                    // Definir gestores por local
+                    // Definir gestores por local (ATUALIZADO)
                     const gestoresPorLocal = {
                         'R&D': ['jadson-r@zaminebrasil.com', 'emerson-a@zaminebrasil.com'],
-                        'Lundin': ['wallysson-s@zaminebrasil.com']
+                        'Lundin': ['wallysson-s@zaminebrasil.com'],
+                        'U&M': ['wallysson-s@zaminebrasil.com'] // Wallysson também é gestor do U&M
                     };
                     
                     // Obter gestores específicos para o local da demanda
@@ -2936,8 +3284,8 @@ function aprovarDemanda(id, nomeFuncionario) {
                     
                     const funcionario = usuarios.find(u => u.id === demanda.funcionarioId);
                     if (funcionario) {
-                        const assunto = encodeURIComponent(`Sua Demanda Foi Aprovada: ${demanda.nomeDemanda || demanda.descricao}`);
-                        const corpo = encodeURIComponent(`Prezado(a) ${nomeFuncionario},\n\nSua demanda foi analisada e aprovada.\n\n--- Detalhes ---\nNome: ${demanda.nomeDemanda || demanda.descricao}\nTAG: ${demanda.tag}\nLocal: ${demanda.local}\n\nParabéns pelo excelente trabalho!\n\nAtenciosamente,\nGestão`);
+                        const assunto = encodeURIComponent(`Sua Demanda Foi Aprovada: ${demanda.nomeDemanda}`);
+                        const corpo = encodeURIComponent(`Prezado(a) ${nomeFuncionario},\n\nSua demanda foi analisada e aprovada.\n\n--- Detalhes ---\nNome: ${demanda.nomeDemanda}\nTAG: ${demanda.tag}\nLocal: ${demanda.local}\n\nParabéns pelo excelente trabalho!\n\nAtenciosamente,\nGestão`);
                         
                         // Preparar emails
                         let emailsPara = funcionario.email;
@@ -2978,6 +3326,28 @@ function aprovarDemanda(id, nomeFuncionario) {
                 });
             }
         });
+    }
+}
+
+// Verificar se o usuário selecionado é gestor e mostrar/esconder filtro
+// Verificar se o usuário selecionado é gestor e mostrar/esconder filtro
+function checkIfGestor() {
+    const userSelect = document.getElementById('userSelect');
+    const gestorViewFilter = document.getElementById('gestorViewFilter');
+    const viewTypeSelect = document.getElementById('viewType');
+    
+    if (userSelect.value) {
+        const usuario = usuarios.find(u => u.id == userSelect.value);
+        if (usuario && usuario.role === 'gestor') {
+            gestorViewFilter.style.display = 'block';
+            // GARANTIR que "Visão Geral" seja o padrão
+            viewTypeSelect.value = 'geral';
+        } else {
+            gestorViewFilter.style.display = 'none';
+            viewTypeSelect.value = 'proprio';
+        }
+    } else {
+        gestorViewFilter.style.display = 'none';
     }
 }
     // Função para inicializar o reconhecimento de fala
@@ -3308,38 +3678,51 @@ function aprovarDemanda(id, nomeFuncionario) {
     }
 
     // Sistema de Login
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const userId = document.getElementById('userSelect').value;
-        const password = document.getElementById('passwordInput').value;
-        
-        const usuario = usuarios.find(u => u.id == userId);
-        
-        if (!usuario) {
-            showNotification('error', 'Erro de Login', 'Usuário não encontrado');
-            return;
-        }
-        
-        if (usuario.senha !== password) {
-            showNotification('error', 'Erro de Login', 'Senha incorreta');
-            return;
-        }
-        
-        usuarioLogado = usuario;
-        sessionStorage.setItem('usuarioLogado', JSON.stringify(usuario));
-        
-        document.getElementById('loginContainer').style.display = 'none';
-        document.getElementById('mainContainer').style.display = 'block';
-        
-        configurarInterfaceUsuario();
-        inicializarSistemaPrincipal();
-        
-        carregarNotificacoesDoStorage();
-        
-        showNotification('success', 'Bem-vindo!', `Olá, ${usuario.nome}! Você está logado como ${usuario.role === 'gestor' ? 'Gestor' : 'Funcionário'}`);
-    });
-
+   // Sistema de Login
+// Sistema de Login
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const userId = document.getElementById('userSelect').value;
+    const password = document.getElementById('passwordInput').value;
+    let viewType = document.getElementById('viewType').value;
+    
+    const usuario = usuarios.find(u => u.id == userId);
+    
+    if (!usuario) {
+        showNotification('error', 'Erro de Login', 'Usuário não encontrado');
+        return;
+    }
+    
+    if (usuario.senha !== password) {
+        showNotification('error', 'Erro de Login', 'Senha incorreta');
+        return;
+    }
+    
+    usuarioLogado = usuario;
+    
+    // GARANTIR TIPO DE VISÃO CORRETO
+    if (usuarioLogado.role === 'gestor') {
+        // Se for gestor, usar o valor selecionado ou padrão "geral"
+        usuarioLogado.viewType = viewType || 'geral';
+    } else {
+        // Funcionários sempre têm visão própria
+        usuarioLogado.viewType = 'proprio';
+    }
+    
+    sessionStorage.setItem('usuarioLogado', JSON.stringify(usuarioLogado));
+    
+    document.getElementById('loginContainer').style.display = 'none';
+    document.getElementById('mainContainer').style.display = 'block';
+    
+    configurarInterfaceUsuario();
+    inicializarSistemaPrincipal();
+    
+    carregarNotificacoesDoStorage();
+    
+    const viewText = usuarioLogado.viewType === 'geral' ? 'Visão Geral' : 'Própria';
+    showNotification('success', 'Bem-vindo!', `Olá, ${usuario.nome}! Você está logado como ${usuario.role === 'gestor' ? `Gestor (${viewText})` : 'Funcionário'}`);
+});
     // Formulário de esqueci senha
     document.getElementById('forgotPasswordForm').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -3412,30 +3795,10 @@ function aprovarDemanda(id, nomeFuncionario) {
     });
 
     // Configurar interface do usuário
-    function configurarInterfaceUsuario() {
-        const userBadge = document.getElementById('userBadge');
-        const userName = document.getElementById('userName');
-        
-        if (userBadge && userName) {
-            userName.textContent = usuarioLogado.nome;
-            
-            if (usuarioLogado.role === 'gestor') {
-                userBadge.classList.add('gestor');
-                userBadge.innerHTML = '<i class="fas fa-user-shield"></i> <span>' + usuarioLogado.nome + ' (Gestor)</span>';
-                document.getElementById('gestorTab').style.display = 'block';
-                document.getElementById('gestorTab2').style.display = 'block';
-                document.getElementById('gestorTab4').style.display = 'block';
-                document.getElementById('gestorTab5').style.display = 'block';
-                document.getElementById('gestorActions2').style.display = 'flex';
-                document.getElementById('gestorActions3').style.display = 'flex';
-                document.getElementById('exportRankingBtn').style.display = 'inline-block';
-            } else {
-                userBadge.innerHTML = '<i class="fas fa-user"></i> <span>' + usuarioLogado.nome + '</span>';
-            }
-        }
-    }
+    // Configurar interface do usuário
+// Configurar interface do usuário
 
-    // Inicializar sistema principal
+// Inicializar sistema principal
     async function inicializarSistemaPrincipal() {
         carregarFuncionariosNosSelect();
         await carregarDadosDoServidor();
@@ -3467,14 +3830,15 @@ function aprovarDemanda(id, nomeFuncionario) {
    // Carregar funcionários nos selects
 // Carregar funcionários nos selects
 // Carregar funcionários nos selects
+// Carregar funcionários nos selects
 function carregarFuncionariosNosSelect() {
     const selects = [
         'filtroFuncionario', 
         'cobrancaFuncionario', 
         'colabFuncFilter', 
         'analiseFuncFilter', 
-        'atrasadasFuncFilter', // <-- ADICIONAR ESTE
-        'aprovadasFuncFilter', // <-- ADICIONAR ESTE
+        'atrasadasFuncFilter', 
+        'aprovadasFuncFilter', 
         'reassignTo', 
         'noteAssignTo', 
         'mindmapFuncFilter'
@@ -3489,23 +3853,37 @@ function carregarFuncionariosNosSelect() {
                 selectId === 'colabFuncFilter' || 
                 selectId === 'mindmapFuncFilter' || 
                 selectId === 'analiseFuncFilter' || 
-                selectId === 'atrasadasFuncFilter' || // <-- ADICIONAR ESTE
-                selectId === 'aprovadasFuncFilter') { // <-- ADICIONAR ESTE
+                selectId === 'atrasadasFuncFilter' || 
+                selectId === 'aprovadasFuncFilter') {
                 const defaultOption = new Option('Todos os Funcionários', 'todos');
                 select.add(defaultOption);
             } else if (selectId === 'cobrancaFuncionario') {
                 const defaultOption = new Option('Todos os Funcionários com Demandas Atrasadas', 'todos');
                 select.add(defaultOption);
             } else if (selectId === 'reassignTo') {
-                const defaultOption = new Option('Selecione um funcionário', '');
+                // Alterado para incluir funcionários e gestores
+                const defaultOption = new Option('Selecione um funcionário ou gestor', '');
                 select.add(defaultOption);
             } else if (selectId === 'noteAssignTo') {
                 const defaultOption = new Option('Não atribuir', '');
                 select.add(defaultOption);
             }
 
-            usuarios.filter(u => u.role === 'funcionario').forEach(func => {
-                const option = new Option(func.nome, func.id);
+            // Filtrar usuários com base no tipo de select
+            let usuariosParaMostrar = usuarios;
+            if (selectId === 'reassignTo') {
+                // Para reatribuição, mostrar funcionários e gestores
+                usuariosParaMostrar = usuarios.filter(u => u.role === 'funcionario' || u.role === 'gestor');
+            } else if (selectId === 'noteAssignTo') {
+                // Para notas, mostrar todos os usuários
+                usuariosParaMostrar = usuarios;
+            } else {
+                // Para outros filtros, mostrar apenas funcionários
+                usuariosParaMostrar = usuarios.filter(u => u.role === 'funcionario');
+            }
+
+            usuariosParaMostrar.forEach(usuario => {
+                const option = new Option(usuario.nome, usuario.id);
                 select.add(option);
             });
         }
@@ -3532,34 +3910,39 @@ function carregarFuncionariosNosSelect() {
     
     inicializarCampoMultiSelect();
 }
-
     // Inicializar campo de seleção múltipla
-    function inicializarCampoMultiSelect() {
-        const dropdown = document.getElementById('atribuidoADropdown');
-        if (!dropdown) return;
+   // Inicializar campo de seleção múltipla
+function inicializarCampoMultiSelect() {
+    const dropdown = document.getElementById('atribuidoADropdown');
+    if (!dropdown) return;
+    
+    dropdown.innerHTML = '';
+    
+    // Incluir tanto funcionários quanto gestores
+    usuarios.filter(u => u.role === 'funcionario' || u.role === 'gestor').forEach(usuario => {
+        const option = document.createElement('div');
+        option.className = 'multi-select-option';
         
-        dropdown.innerHTML = '';
+        // Adicionar ícone para diferenciar gestores
+        const icon = usuario.role === 'gestor' ? '<i class="fas fa-user-shield"></i> ' : '<i class="fas fa-user"></i> ';
+        const label = usuario.role === 'gestor' ? `${usuario.nome} (Gestor)` : usuario.nome;
         
-        usuarios.filter(u => u.role === 'funcionario').forEach(usuario => {
-            const option = document.createElement('div');
-            option.className = 'multi-select-option';
-            option.innerHTML = `
-                <input type="checkbox" id="user_${usuario.id}" value="${usuario.id}">
-                <label for="user_${usuario.id}">${usuario.nome}</label>
-            `;
-            
-            option.addEventListener('click', function(e) {
-                if (e.target.tagName !== 'INPUT') {
-                    const checkbox = this.querySelector('input[type="checkbox"]');
-                    checkbox.checked = !checkbox.checked;
-                }
-                updateSelectedUsers();
-            });
-            
-            dropdown.appendChild(option);
+        option.innerHTML = `
+            <input type="checkbox" id="user_${usuario.id}" value="${usuario.id}">
+            <label for="user_${usuario.id}">${icon}${label}</label>
+        `;
+        
+        option.addEventListener('click', function(e) {
+            if (e.target.tagName !== 'INPUT') {
+                const checkbox = this.querySelector('input[type="checkbox"]');
+                checkbox.checked = !checkbox.checked;
+            }
+            updateSelectedUsers();
         });
-    }
-
+        
+        dropdown.appendChild(option);
+    });
+}
     // Alternar dropdown de seleção múltipla
     function toggleMultiSelect(id) {
         const dropdown = document.getElementById(id + 'Dropdown');
@@ -3779,70 +4162,269 @@ function carregarFuncionariosNosSelect() {
     }
 
     // Obter demandas para o usuário logado
-    function getDemandasParaUsuarioLogado() {
-        if (!usuarioLogado) return [];
+    // Obter demandas para o usuário logado
+// Obter demandas para o usuário logado (atualizada para suportar visão geral/própria)
+// Obter demandas para visão geral (todas as demandas dos colaboradores)
+function getDemandasVisaoGeral() {
+    if (!usuarioLogado || usuarioLogado.role !== 'gestor') return [];
+    
+    // Para visão geral, mostrar TODAS as demandas que aparecem na aba "Pendentes Colaboradores"
+    // Isso inclui:
+    // 1. Demandas criadas por gestores e atribuídas a funcionários ou outros gestores
+    // 2. Demandas criadas por gestores e NÃO atribuídas (IMPORTANTE!)
+    // 3. Demandas criadas por funcionários (compatibilidade)
+    return todasDemandas.filter(demanda => {
+        // Verificar se o criador é um gestor
+        const criadorEGestor = usuarios.some(u => u.role === 'gestor' && u.id === demanda.funcionarioId);
         
-        // Para gestores, mostrar todas as demandas dos colaboradores no dashboard
-        if (usuarioLogado.role === 'gestor') {
-            return todasDemandas;
-        }
-        
-        // Para funcionários, as demandas que eles criaram ou que foram atribuídas a eles
-        if (usuarioLogado.role === 'funcionario') {
-            return todasDemandas.filter(demanda => {
-                const eCriador = demanda.funcionarioId === usuarioLogado.id;
-                const eAtribuido = Array.isArray(demanda.atribuidos) && demanda.atribuidos.some(a => a.id === usuarioLogado.id);
-                return eCriador || eAtribuido;
+        // Verificar se foi atribuída a funcionários ou gestores
+        const atribuidaAFuncionariosOuGestores = Array.isArray(demanda.atribuidos) && 
+            demanda.atribuidos.some(a => {
+                const usuario = usuarios.find(u => u.id === a.id);
+                return usuario && (usuario.role === 'funcionario' || usuario.role === 'gestor');
             });
-        }
-        return [];
-    }
-
-    // Obter demandas dos colaboradores
-    function getDemandasDosColaboradores() {
-        if (!usuarioLogado || usuarioLogado.role !== 'gestor') return [];
         
-        // Para gestores, mostrar todas as demandas dos funcionários
+        // Verificar se NÃO foi atribuída (para incluir demandas de gestores sem atribuição)
+        const naoAtribuida = !demanda.atribuidos || demanda.atribuidos.length === 0;
+        
+        // Manter compatibilidade com demandas criadas por funcionários
+        const criadaPorFuncionario = usuarios.some(u => u.role === 'funcionario' && u.id === demanda.funcionarioId);
+        
+        // REGRA CORRIGIDA:
+        // Mostrar se:
+        // (foi criada por gestor E (atribuída a alguém OU não atribuída)) OU (foi criada por funcionário)
+        return (criadorEGestor && (atribuidaAFuncionariosOuGestores || naoAtribuida)) || criadaPorFuncionario;
+    });
+}
+
+// Obter demandas para o usuário logado (atualizada para suportar visão geral/própria)
+// Obter demandas para o usuário logado (atualizada para suportar visão geral/própria)
+// Obter demandas para o usuário logado (CORRIGIDA)
+function getDemandasParaUsuarioLogado() {
+    if (!usuarioLogado) return [];
+    
+    // Se for gestor e estiver em visão geral
+    if (usuarioLogado.role === 'gestor' && usuarioLogado.viewType === 'geral') {
+        return getDemandasVisaoGeral();
+    }
+    
+    // Para gestores em visão própria - mostrar APENAS suas demandas (como funcionário)
+    if (usuarioLogado.role === 'gestor') {
         return todasDemandas.filter(demanda => {
-            // Incluir demandas criadas pelo gestor e atribuídas a funcionários
-            if (demanda.funcionarioId === usuarioLogado.id && demanda.atribuidos && demanda.atribuidos.length > 0) {
-                return true;
-            }
+            // Mostrar apenas se:
+            // 1. A demanda foi criada pelo gestor
+            // 2. OU a demanda foi atribuída diretamente ao gestor
+            const eCriador = demanda.funcionarioId === usuarioLogado.id;
+            const atribuidaAMim = Array.isArray(demanda.atribuidos) && demanda.atribuidos.some(a => a.id === usuarioLogado.id);
             
-            // Incluir demandas criadas por funcionários
-            return usuarios.some(u => u.role === 'funcionario' && u.id === demanda.funcionarioId);
+            return eCriador || atribuidaAMim;
         });
     }
+    
+    // Para funcionários, as demandas que eles criaram ou que foram atribuídas a eles
+    if (usuarioLogado.role === 'funcionario') {
+        return todasDemandas.filter(demanda => {
+            const eCriador = demanda.funcionarioId === usuarioLogado.id;
+            const eAtribuido = Array.isArray(demanda.atribuidos) && demanda.atribuidos.some(a => a.id === usuarioLogado.id);
+            return eCriador || eAtribuido;
+        });
+    }
+    return [];
+}
+
+// Alternar tipo de visão
+// Alternar tipo de visão
+// Alternar tipo de visão
+// Alternar tipo de visão
+// Alternar tipo de visão
+function changeViewType() {
+    if (!usuarioLogado || usuarioLogado.role !== 'gestor') return;
+    
+    const newViewType = document.getElementById('viewTypeToggle').value;
+    usuarioLogado.viewType = newViewType;
+    
+    // Atualizar no sessionStorage
+    sessionStorage.setItem('usuarioLogado', JSON.stringify(usuarioLogado));
+    
+    // Atualizar badge do usuário
+    const userBadge = document.getElementById('userBadge');
+    if (userBadge) {
+        const viewText = newViewType === 'geral' ? 'Visão Geral' : 'Própria';
+        userBadge.innerHTML = '<i class="fas fa-user-shield"></i> <span>' + usuarioLogado.nome + ' (Gestor - ' + viewText + ')</span>';
+    }
+    
+    // CONTROLAR VISIBILIDADE DAS ABAS
+    const pendentesTab = document.querySelector('.tab[onclick*="pendentes"]');
+    const colabTab = document.getElementById('gestorTab');
+    
+    if (pendentesTab && colabTab) {
+        if (newViewType === 'geral') {
+            // VISÃO GERAL: Ocultar "Minhas Demandas", manter "Pendentes Colaboradores"
+            pendentesTab.style.display = 'none';
+            colabTab.style.display = 'block';
+            showNotification('info', 'Visão Geral', 'Mostrando visão geral. Use "Pendentes Colaboradores" para gerenciar.');
+            
+            // Se estiver na aba "Minhas Demandas", mudar para dashboard
+            const activeTab = document.querySelector('.tab.active');
+            if (activeTab && activeTab.onclick && activeTab.onclick.toString().includes('pendentes')) {
+                switchTab('dashboard');
+            }
+        } else {
+            // VISÃO PRÓPRIA: Mostrar "Minhas Demandas" e "Pendentes Colaboradores"
+            pendentesTab.style.display = 'block';
+            colabTab.style.display = 'block';
+            showNotification('info', 'Visão Própria', 'Mostrando apenas suas demandas.');
+        }
+    }
+    
+    // FORÇAR RECARREGAMENTO COMPLETO
+    console.log('Mudando visão para:', newViewType);
+    atualizarDashboard();
+    renderizarTodasAsAbas();
+    atualizarBadges();
+    atualizarGraficos();
+}
+
+// Atualizar função configurarInterfaceUsuario para mostrar o controle de visão
+// Configurar interface do usuário
+// Configurar interface do usuário
+// Configurar interface do usuário
+function configurarInterfaceUsuario() {
+    const userBadge = document.getElementById('userBadge');
+    const userName = document.getElementById('userName');
+    const viewToggle = document.getElementById('viewToggle');
+    const viewTypeToggle = document.getElementById('viewTypeToggle');
+    
+    if (userBadge && userName) {
+        userName.textContent = usuarioLogado.nome;
+        
+        if (usuarioLogado.role === 'gestor') {
+            userBadge.classList.add('gestor');
+            const viewText = usuarioLogado.viewType === 'geral' ? 'Visão Geral' : 'Própria';
+            userBadge.innerHTML = '<i class="fas fa-user-shield"></i> <span>' + usuarioLogado.nome + ' (Gestor - ' + viewText + ')</span>';
+            
+            // Mostrar controle de visão
+            if (viewToggle && viewTypeToggle) {
+                viewToggle.style.display = 'block';
+                viewTypeToggle.value = usuarioLogado.viewType || 'geral';
+            }
+            
+            document.getElementById('gestorTab').style.display = 'block';
+            document.getElementById('gestorTab2').style.display = 'block';
+            document.getElementById('gestorTab4').style.display = 'block';
+            document.getElementById('gestorTab5').style.display = 'block';
+            document.getElementById('gestorActions2').style.display = 'flex';
+            document.getElementById('gestorActions3').style.display = 'flex';
+            document.getElementById('exportRankingBtn').style.display = 'inline-block';
+            
+            // CONTROLE DAS ABAS CONFORME A VISÃO
+            const pendentesTab = document.querySelector('.tab[onclick*="pendentes"]');
+            const colabTab = document.getElementById('gestorTab');
+            
+            if (pendentesTab && colabTab) {
+                if (usuarioLogado.viewType === 'geral') {
+                    // VISÃO GERAL: Ocultar "Minhas Demandas", manter "Pendentes Colaboradores"
+                    pendentesTab.style.display = 'none';
+                    colabTab.style.display = 'block';
+                    console.log('Visão Geral: Ocultando Minhas Demandas, mostrando Pendentes Colaboradores');
+                } else {
+                    // VISÃO PRÓPRIA: Mostrar "Minhas Demandas" e "Pendentes Colaboradores"
+                    pendentesTab.style.display = 'block';
+                    colabTab.style.display = 'block';
+                    console.log('Visão Própria: Mostrando ambas as abas');
+                }
+            }
+            
+        } else {
+            userBadge.innerHTML = '<i class="fas fa-user"></i> <span>' + usuarioLogado.nome + '</span>';
+            
+            // Esconder controle de visão para funcionários
+            if (viewToggle) {
+                viewToggle.style.display = 'none';
+            }
+        }
+    }
+}
+// Obter demandas dos colaboradores
+    // Obter demandas dos colaboradores
+// Obter demandas dos colaboradores
+// Obter demandas dos colaboradores
+// Obter demandas dos colaboradores
+function getDemandasDosColaboradores() {
+    if (!usuarioLogado || usuarioLogado.role !== 'gestor') return [];
+    
+    // Para gestores, mostrar:
+    // 1. Demandas criadas por gestores e atribuídas a funcionários ou outros gestores
+    // 2. Demandas criadas por gestores e NÃO atribuídas (NOVO)
+    // 3. Demandas criadas por funcionários (mantido para compatibilidade)
+    return todasDemandas.filter(demanda => {
+        // Verificar se o criador é um gestor
+        const criadorEGestor = usuarios.some(u => u.role === 'gestor' && u.id === demanda.funcionarioId);
+        
+        // Verificar se foi atribuída a funcionários ou gestores
+        const atribuidaAFuncionariosOuGestores = Array.isArray(demanda.atribuidos) && 
+            demanda.atribuidos.some(a => {
+                const usuario = usuarios.find(u => u.id === a.id);
+                return usuario && (usuario.role === 'funcionario' || usuario.role === 'gestor');
+            });
+        
+        // Verificar se NÃO foi atribuída (para incluir demandas de gestores sem atribuição)
+        const naoAtribuida = !demanda.atribuidos || demanda.atribuidos.length === 0;
+        
+        // Manter compatibilidade com demandas criadas por funcionários
+        const criadaPorFuncionario = usuarios.some(u => u.role === 'funcionario' && u.id === demanda.funcionarioId);
+        
+        // Mostrar se:
+        // (foi criada por gestor E (atribuída a alguém OU não atribuída)) OU (foi criada por funcionário)
+        return (criadorEGestor && (atribuidaAFuncionariosOuGestores || naoAtribuida)) || criadaPorFuncionario;
+    });
+}
 
     // Obter demandas filtradas
-    function getDemandasFiltradas() {
-        let demandasBase = getDemandasParaUsuarioLogado();
+   function getDemandasFiltradas() {
+    let demandasBase = getDemandasParaUsuarioLogado();
 
-        if (filtroFuncionarioAtual !== 'todos') {
-            demandasBase = demandasBase.filter(d => d.funcionarioId == filtroFuncionarioAtual);
-        }
-        
-        const periodo = document.getElementById('filtroPeriodo')?.value;
-        if (periodo && periodo !== 'all') {
-            const diasAtras = parseInt(periodo);
-            const cutoffDate = new Date();
-            cutoffDate.setDate(cutoffDate.getDate() - diasAtras);
-            demandasBase = demandasBase.filter(d => new Date(d.dataCriacao) >= cutoffDate);
-        }
-        
-        const categoria = document.getElementById('filtroCategoria')?.value;
-        if (categoria && categoria !== 'todas') {
-            demandasBase = demandasBase.filter(d => d.categoria === categoria);
-        }
-        
-        const prioridade = document.getElementById('filtroPrioridade')?.value;
-        if (prioridade && prioridade !== 'todas') {
-            demandasBase = demandasBase.filter(d => d.prioridade === prioridade);
-        }
-        
-        return demandasBase;
+    if (filtroFuncionarioAtual !== 'todos') {
+        demandasBase = demandasBase.filter(d => d.funcionarioId == filtroFuncionarioAtual);
     }
-
+    
+    const periodo = document.getElementById('filtroPeriodo')?.value;
+    if (periodo && periodo !== 'all') {
+        const diasAtras = parseInt(periodo);
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - diasAtras);
+        demandasBase = demandasBase.filter(d => new Date(d.dataCriacao) >= cutoffDate);
+    }
+    
+    const categoria = document.getElementById('filtroCategoria')?.value;
+    if (categoria && categoria !== 'todas') {
+        demandasBase = demandasBase.filter(d => d.categoria === categoria);
+    }
+    
+    const prioridade = document.getElementById('filtroPrioridade')?.value;
+    if (prioridade && prioridade !== 'todas') {
+        demandasBase = demandasBase.filter(d => d.prioridade === prioridade);
+    }
+    
+    // Aplicar filtro de comentários
+    if (window.filtroComentariosAtual) {
+        if (window.filtroComentariosAtual === 'com-comentarios') {
+            demandasBase = demandasBase.filter(d => 
+                d.comentariosUsuarios && 
+                Array.isArray(d.comentariosUsuarios) && 
+                d.comentariosUsuarios.length > 0
+            );
+        } else if (window.filtroComentariosAtual === 'sem-comentarios') {
+            demandasBase = demandasBase.filter(d => 
+                !d.comentariosUsuarios || 
+                !Array.isArray(d.comentariosUsuarios) || 
+                d.comentariosUsuarios.length === 0
+            );
+        }
+    }
+    
+    return demandasBase;
+}
     // Atualizar dashboard
     function atualizarDashboard() {
         const demandasFiltradas = getDemandasFiltradas();
@@ -4039,28 +4621,35 @@ function carregarFuncionariosNosSelect() {
 
     // Fechar modal
     function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.style.display = 'none';
-            if (modalId === 'resolucaoModal') {
-                document.getElementById('resolucaoForm').reset();
-                document.getElementById('anexosList').innerHTML = '';
-                demandaResolucaoAtual = null;
-            }
-            if (modalId === 'reprovacaoModal') {
-                document.getElementById('reprovacaoForm').reset();
-                document.getElementById('deadlineExtension').classList.remove('active');
-            }
-            if (modalId === 'noteModal') {
-                document.getElementById('noteForm').reset();
-            }
-            if (modalId === 'extendDeadlineModal') {
-                document.getElementById('extendDeadlineForm').reset();
-            }
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        if (modalId === 'resolucaoModal') {
+            document.getElementById('resolucaoForm').reset();
+            document.getElementById('anexosList').innerHTML = '';
+            demandaResolucaoAtual = null;
+        }
+        if (modalId === 'reprovacaoModal') {
+            document.getElementById('reprovacaoForm').reset();
+            document.getElementById('deadlineExtension').classList.remove('active');
+        }
+        if (modalId === 'noteModal') {
+            document.getElementById('noteForm').reset();
+        }
+        if (modalId === 'extendDeadlineModal') {
+            document.getElementById('extendDeadlineForm').reset();
+        }
+        if (modalId === 'editarDemandaModal') {
+            document.getElementById('editarDemandaForm').reset();
+            document.getElementById('editarDiasSemanaGroup').style.display = 'none';
+            document.getElementById('editarCustomCategoryInput').style.display = 'none';
+            // Limpar variáveis globais
+            window.demandaEdicaoAtual = null;
+            window.selectedUsersEditar = [];
         }
     }
-
-    // Ação rápida
+}
+// Ação rápida
     function quickAction() {
         switchTab('nova');
     }
@@ -4275,11 +4864,13 @@ function carregarFuncionariosNosSelect() {
     // Notificar partes interessadas sobre nova demanda
     // Notificar partes interessadas sobre nova demanda
 // Notificar partes interessadas sobre nova demanda
+// Notificar partes interessadas sobre nova demanda
 function notificarPartesInteressadasNovaDemanda(demanda) {
-    // Definir gestores por local
+    // Definir gestores por local (ATUALIZADO)
     const gestoresPorLocal = {
         'R&D': ['jadson-r@zaminebrasil.com', 'emerson-a@zaminebrasil.com'],
-        'Lundin': ['wallysson-s@zaminebrasil.com']
+        'Lundin': ['wallysson-s@zaminebrasil.com'],
+        'U&M': ['wallysson-s@zaminebrasil.com'] // Wallysson também é gestor do U&M
     };
     
     // Obter gestores específicos para o local da demanda
@@ -4318,8 +4909,8 @@ function notificarPartesInteressadasNovaDemanda(demanda) {
             window.open(mailtoLink, '_blank');
         }
     }
-}
-    // Abrir modal de resolução
+} 
+// Abrir modal de resolução
     function abrirModalResolucao(demandaId) {
         demandaResolucaoAtual = todasDemandas.find(d => d.id === demandaId);
         if (!demandaResolucaoAtual) return;
@@ -4538,41 +5129,46 @@ async function salvarReprovacao() {
     }
 
     // Renderizar demandas
-    function renderizarDemandas() {
-        const demandasDoUsuario = getDemandasParaUsuarioLogado();
-        const statusFilter = document.getElementById('pendentesFilter')?.value || 'todos';
-        const monthFilter = document.getElementById('pendentesMonthFilter')?.value || '';
-        const yearFilter = document.getElementById('pendentesYearFilter')?.value || '';
+    // Renderizar demandas
+function renderizarDemandas() {
+    const demandasDoUsuario = getDemandasParaUsuarioLogado();
+    const statusFilter = document.getElementById('pendentesFilter')?.value || 'todos';
+    const monthFilter = document.getElementById('pendentesMonthFilter')?.value || '';
+    const yearFilter = document.getElementById('pendentesYearFilter')?.value || '';
 
-        const pendentesContainer = document.getElementById('pendentesContainer');
-        
-        if (pendentesContainer) pendentesContainer.innerHTML = '';
+    const pendentesContainer = document.getElementById('pendentesContainer');
+    
+    if (pendentesContainer) pendentesContainer.innerHTML = '';
 
-        let pendentes = demandasDoUsuario.filter(d => {
-            const matchesStatus = statusFilter === 'todos' || d.status === statusFilter;
-            
-            const matchesDate = matchesDateFilter(d, monthFilter, yearFilter);
-            
-            return matchesStatus && matchesDate && (
-                d.status === 'pendente' || 
-                d.status === 'reprovada' || 
-                d.status === 'reprovada_pelo_atribuido' ||
-                d.status === 'atribuida_pendente_aceitacao'
-            );
-        });
+    let pendentes = demandasDoUsuario.filter(d => {
+        const matchesStatus = statusFilter === 'todos' || d.status === statusFilter;
         
-        if (pendentesContainer) {
-            if (pendentes.length === 0) {
-                pendentesContainer.innerHTML = '<p>Nenhuma demanda pendente no momento.</p>';
+        const matchesDate = matchesDateFilter(d, monthFilter, yearFilter);
+        
+        return matchesStatus && matchesDate && (
+            d.status === 'pendente' || 
+            d.status === 'reprovada' || 
+            d.status === 'reprovada_pelo_atribuido' ||
+            d.status === 'atribuida_pendente_aceitacao'
+        );
+    });
+    
+    if (pendentesContainer) {
+        if (pendentes.length === 0) {
+            // Mensagem específica para gestores
+            if (usuarioLogado && usuarioLogado.role === 'gestor') {
+                pendentesContainer.innerHTML = '<p>Você não possui demandas pendentes. Demandas atribuídas a colaboradores aparecem na aba "Pendentes Colaboradores".</p>';
             } else {
-                pendentes.forEach(demanda => {
-                    const elemento = criarElementoDemanda(demanda);
-                    pendentesContainer.appendChild(elemento);
-                });
+                pendentesContainer.innerHTML = '<p>Nenhuma demanda pendente no momento.</p>';
             }
+        } else {
+            pendentes.forEach(demanda => {
+                const elemento = criarElementoDemanda(demanda);
+                pendentesContainer.appendChild(elemento);
+            });
         }
     }
-
+}
     // Renderizar análise
    // Renderizar análise
 function renderizarAnalise() {
@@ -4706,37 +5302,38 @@ function renderizarAprovadas() {
 }
 
     // Renderizar pendentes dos colaboradores
-    function renderizarPendentesColaboradores() {
-        const demandasColaboradores = getDemandasDosColaboradores();
-        const statusFilter = document.getElementById('colabFilter')?.value || 'todos';
-        const funcFilter = document.getElementById('colabFuncFilter')?.value || 'todos';
-        const localFilter = document.getElementById('colabLocalFilter')?.value || 'todos';
-        const monthFilter = document.getElementById('colabMonthFilter')?.value || '';
-        const yearFilter = document.getElementById('colabYearFilter')?.value || '';
+    // Renderizar pendentes dos colaboradores
+function renderizarPendentesColaboradores() {
+    const demandasColaboradores = getDemandasDosColaboradores();
+    const statusFilter = document.getElementById('colabFilter')?.value || 'todos';
+    const funcFilter = document.getElementById('colabFuncFilter')?.value || 'todos';
+    const localFilter = document.getElementById('colabLocalFilter')?.value || 'todos';
+    const monthFilter = document.getElementById('colabMonthFilter')?.value || '';
+    const yearFilter = document.getElementById('colabYearFilter')?.value || '';
 
-        const colabContainer = document.getElementById('colabContainer');
-        
-        if (colabContainer) colabContainer.innerHTML = '';
+    const colabContainer = document.getElementById('colabContainer');
+    
+    if (colabContainer) colabContainer.innerHTML = '';
 
-        let demandas = demandasColaboradores.filter(d => {
-            const matchesStatus = statusFilter === 'todos' || d.status === statusFilter;
-            const matchesFunc = funcFilter === 'todos' || d.funcionarioId == funcFilter;
-            const matchesLocal = localFilter === 'todos' || d.local === localFilter;
-            const matchesDate = matchesDateFilter(d, monthFilter, yearFilter);
-            
-            return matchesStatus && matchesFunc && matchesLocal && matchesDate;
-        });
+    let demandas = demandasColaboradores.filter(d => {
+        const matchesStatus = statusFilter === 'todos' || d.status === statusFilter;
+        const matchesFunc = funcFilter === 'todos' || d.funcionarioId == funcFilter;
+        const matchesLocal = localFilter === 'todos' || d.local === localFilter;
+        const matchesDate = matchesDateFilter(d, monthFilter, yearFilter);
         
-        if (colabContainer) {
-            if (demandas.length === 0) {
-                colabContainer.innerHTML = '<p>Nenhuma demanda dos colaboradores encontrada.</p>';
-            } else {
-                demandas.forEach(demanda => {
-                    colabContainer.appendChild(criarElementoDemanda(demanda));
-                });
-            }
+        return matchesStatus && matchesFunc && matchesLocal && matchesDate;
+    });
+    
+    if (colabContainer) {
+        if (demandas.length === 0) {
+            colabContainer.innerHTML = '<p>Nenhuma demanda dos colaboradores encontrada.</p>';
+        } else {
+            demandas.forEach(demanda => {
+                colabContainer.appendChild(criarElementoDemanda(demanda));
+            });
         }
     }
+}
 
     // Função para verificar se a data corresponde aos filtros de mês e ano
     function matchesDateFilter(demanda, monthFilter, yearFilter) {
@@ -4774,242 +5371,278 @@ function renderizarAprovadas() {
     }
 
     // Criar elemento de demanda
-    function criarElementoDemanda(demanda, isAtrasado = false) {
-        // Usa a função de normalizar para garantir que os dados estejam corretos
-        demanda = normalizarDadosDemanda(demanda);
+   // Substitua a função criarElementoDemanda existente por esta:
+function criarElementoDemanda(demanda, isAtrasado = false) {
+    // Usa a função de normalizar para garantir que os dados estejam corretos
+    demanda = normalizarDadosDemanda(demanda);
 
-        const div = document.createElement('div');
-        
-        const status = demanda.status || 'pendente';
-        const isRotina = demanda.isRotina || false;
-        const dataLimite = demanda.dataLimite;
-        const statusClass = isAtrasado ? 'atrasado' : status;
-        
-        div.className = `demanda-item ${statusClass} ${isRotina ? 'rotina' : ''}`;
-        
-        let statusIcon = '⏳';
-        switch (status) {
-            case 'aprovada':
-                statusIcon = '✅';
-                break;
-            case 'reprovada':
-            case 'reprovada_pelo_atribuido':
-                statusIcon = '❌';
-                break;
-            case 'finalizado_pendente_aprovacao':
-                statusIcon = '📋';
-                break;
-            case 'atribuida_pendente_aceitacao':
-                statusIcon = '📋';
-                break;
-        }
-        
-        const dataLimiteFormatada = dataLimite ? new Date(dataLimite).toLocaleDateString('pt-BR') : '';
-        const rotinaInfo = isRotina ? `<small><i class="fas fa-redo"></i> Tarefa de rotina</small>` : '';
-        
-        let infoAdicional = '';
-        if (status === 'finalizado_pendente_aprovacao') {
-            infoAdicional = `<br><small><strong>Comentários do Funcionário:</strong> ${demanda.comentarios || ''}</small>`;
-        }
-        
-        if (status === 'reprovada_pelo_atribuido') {
-            infoAdicional = `<br><small><strong>Motivo da Reprovação:</strong> ${demanda.comentarioReprovacaoAtribuicao || ''}</small>`;
-        }
-        
-        if (status === 'reprovada') {
-            infoAdicional = `<br><small><strong>Motivo da Reprovação:</strong> ${demanda.comentarioGestor || ''}</small>`;
-        }
-        
-        let diasFormatados = '';
-        // A verificação agora é segura, pois normalizarDadosDemanda garante que é um array
-        if (demanda.isRotina && Array.isArray(demanda.diasSemana) && demanda.diasSemana.length > 0) {
-            diasFormatados = demanda.diasSemana.map(dia => ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'][dia]).join(', ');
-        }
-        
-        let tempoElement = '';
-        if (status === 'aprovada' && demanda.dataConclusao) {
-            const performanceText = calcularDesempenhoTempo(demanda.dataCriacao, demanda.dataConclusao, dataLimite);
-            const performanceClass = performanceText.includes('antes') ? 'early' : 'late';
-            tempoElement = `<div class="time-performance ${performanceClass}">${performanceText}</div>`;
-        } else if (status !== 'finalizado_pendente_aprovacao') {
-            // Não mostrar timer para demandas em análise
-            const tempoRestante = dataLimite ? calcularTempoRestante(dataLimite) : '';
-            tempoElement = `<div class="time-remaining">${isAtrasado ? 'ATRASADA HÁ ' : 'TEMPO RESTANTE: '}${tempoRestante}</div>`;
-        }
-        
-        const prioridade = demanda.prioridade || '';
-        const prioridadeBadge = prioridade ? 
-            `<span class="demanda-priority priority-${prioridade.toLowerCase()}">${prioridade}</span>` : '';
-        
-        const podeAprovar = usuarioLogado && usuarioLogado.role === 'gestor';
-        const eDono = usuarioLogado && usuarioLogado.id === demanda.funcionarioId;
-        // A verificação agora é segura, pois normalizarDadosDemanda garante que é um array
-        const eAtribuido = usuarioLogado && Array.isArray(demanda.atribuidos) && demanda.atribuidos.some(a => a.id === usuarioLogado.id);
-        
-        let atribuidosInfo = '';
-        // A verificação agora é segura, pois normalizarDadosDemanda garante que é um array
-        if (Array.isArray(demanda.atribuidos) && demanda.atribuidos.length > 0) {
-            atribuidosInfo = `<small><strong>Atribuída a:</strong> ${demanda.atribuidos.map(a => a.nome).join(', ')}</small>`;
-        }
-        
-        div.innerHTML = `
-            ${prioridadeBadge}
-            <div class="demanda-info">
-                <strong>${demanda.nomeFuncionario} - ${demanda.nomeDemanda || demanda.descricao}</strong>
-                <small>Categoria: ${demanda.categoria} | ${statusIcon} ${demanda.status.replace(/_/g, ' ')} | Local: ${demanda.local || 'N/A'} | Data Limite: ${dataLimiteFormatada}</small>
-                ${atribuidosInfo}
-                <small><strong>TAG:</strong> ${demanda.tag || ''}</small>
-                ${demanda.comentarioGestor ? `<br><small><strong>Comentário do Gestor:</strong> ${demanda.comentarioGestor || ''}</small>` : ''}
-                ${infoAdicional}
-                ${rotinaInfo}
-                ${diasFormatados ? `<small><strong>Dias da semana:</strong> ${diasFormatados}</small>` : ''}
-                ${tempoElement}
-            </div>
-            <div class="acoes-demandas">
-                ${(eDono || eAtribuido) && (demanda.status === 'pendente' || demanda.status === 'reprovada') ? `
-                    <button class="success" onclick="abrirModalResolucao(${demanda.id})" title="Resolver Demanda">
-                        <i class="fas fa-tools"></i>
-                    </button>
-                ` : ''}
-                ${podeAprovar && (demanda.status === 'finalizado_pendente_aprovacao') ? `
-                    <button class="success" onclick="aprovarDemanda(${demanda.id}, '${demanda.nomeFuncionario}')" title="Aprovar">
-                        <i class="fas fa-check"></i>
-                    </button>
-                    <button class="danger" onclick="abrirModalReprovar(${demanda.id})" title="Reprovar">
-                        <i class="fas fa-times"></i>
-                    </button>
-                ` : ''}
-                <button class="secondary" onclick="verDetalhes(${demanda.id})" title="Ver Detalhes">
-                    <i class="fas fa-eye"></i>
-                </button>
-                ${podeAprovar ? `
-                    <button class="danger" onclick="apagarDemanda(${demanda.id})" title="Apagar">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                ` : ''}
-            </div>
-        `;
-        
-        return div;
+    const div = document.createElement('div');
+    
+    const status = demanda.status || 'pendente';
+    const isRotina = demanda.isRotina || false;
+    const dataLimite = demanda.dataLimite;
+    const statusClass = isAtrasado ? 'atrasado' : status;
+    
+    // Verificar se há comentários dos usuários
+    const temComentarios = demanda.comentariosUsuarios && Array.isArray(demanda.comentariosUsuarios) && demanda.comentariosUsuarios.length > 0;
+    const totalComentarios = temComentarios ? demanda.comentariosUsuarios.length : 0;
+    
+    div.className = `demanda-item ${statusClass} ${isRotina ? 'rotina' : ''} ${temComentarios ? 'has-comentarios' : ''}`;
+    
+    let statusIcon = '⏳';
+    switch (status) {
+        case 'aprovada':
+            statusIcon = '✅';
+            break;
+        case 'reprovada':
+        case 'reprovada_pelo_atribuido':
+            statusIcon = '❌';
+            break;
+        case 'finalizado_pendente_aprovacao':
+            statusIcon = '📋';
+            break;
+        case 'atribuida_pendente_aceitacao':
+            statusIcon = '📋';
+            break;
     }
-
-    // Criar elemento de demanda atrasada (com checkbox para seleção)
-    function criarElementoDemandaAtrasada(demanda, isAtrasado = false) {
-        // Usa a função de normalizar para garantir que os dados estejam corretos
-        demanda = normalizarDadosDemanda(demanda);
-
-        const div = document.createElement('div');
-        
-        const status = demanda.status || 'pendente';
-        const isRotina = demanda.isRotina || false;
-        const dataLimite = demanda.dataLimite;
-        const statusClass = isAtrasado ? 'atrasado' : status;
-        
-        div.className = `demanda-item ${statusClass} ${isRotina ? 'rotina' : ''}`;
-        
-        let statusIcon = '⏳';
-        switch (status) {
-            case 'aprovada':
-                statusIcon = '✅';
-                break;
-            case 'reprovada':
-            case 'reprovada_pelo_atribuido':
-                statusIcon = '❌';
-                break;
-            case 'finalizado_pendente_aprovacao':
-                statusIcon = '📋';
-                break;
-            case 'atribuida_pendente_aceitacao':
-                statusIcon = '📋';
-                break;
-        }
-        
-        const dataLimiteFormatada = dataLimite ? new Date(dataLimite).toLocaleDateString('pt-BR') : '';
-        const rotinaInfo = isRotina ? `<small><i class="fas fa-redo"></i> Tarefa de rotina</small>` : '';
-        
-        let infoAdicional = '';
-        if (status === 'finalizado_pendente_aprovacao') {
-            infoAdicional = `<br><small><strong>Comentários do Funcionário:</strong> ${demanda.comentarios || ''}</small>`;
-        }
-        
-        if (status === 'reprovada_pelo_atribuido') {
-            infoAdicional = `<br><small><strong>Motivo da Reprovação:</strong> ${demanda.comentarioReprovacaoAtribuicao || ''}</small>`;
-        }
-        
-        if (status === 'reprovada') {
-            infoAdicional = `<br><small><strong>Motivo da Reprovação:</strong> ${demanda.comentarioGestor || ''}</small>`;
-        }
-        
-        let diasFormatados = '';
-        // A verificação agora é segura, pois normalizarDadosDemanda garante que é um array
-        if (demanda.isRotina && Array.isArray(demanda.diasSemana) && demanda.diasSemana.length > 0) {
-            diasFormatados = demanda.diasSemana.map(dia => ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'][dia]).join(', ');
-        }
-        
+    
+    const dataLimiteFormatada = dataLimite ? new Date(dataLimite).toLocaleDateString('pt-BR') : '';
+    const rotinaInfo = isRotina ? `<small><i class="fas fa-redo"></i> Tarefa de rotina</small>` : '';
+    
+    let infoAdicional = '';
+    if (status === 'finalizado_pendente_aprovacao') {
+        infoAdicional = `<br><small><strong>Comentários do Funcionário:</strong> ${demanda.comentarios || ''}</small>`;
+    }
+    
+    if (status === 'reprovada_pelo_atribuido') {
+        infoAdicional = `<br><small><strong>Motivo da Reprovação:</strong> ${demanda.comentarioReprovacaoAtribuicao || ''}</small>`;
+    }
+    
+    if (status === 'reprovada') {
+        infoAdicional = `<br><small><strong>Motivo da Reprovação:</strong> ${demanda.comentarioGestor || ''}</small>`;
+    }
+    
+    let diasFormatados = '';
+    if (demanda.isRotina && Array.isArray(demanda.diasSemana) && demanda.diasSemana.length > 0) {
+        diasFormatados = demanda.diasSemana.map(dia => ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'][dia]).join(', ');
+    }
+    
+    let tempoElement = '';
+    if (status === 'aprovada' && demanda.dataConclusao) {
+        const performanceText = calcularDesempenhoTempo(demanda.dataCriacao, demanda.dataConclusao, dataLimite);
+        const performanceClass = performanceText.includes('antes') ? 'early' : 'late';
+        tempoElement = `<div class="time-performance ${performanceClass}">${performanceText}</div>`;
+    } else if (status !== 'finalizado_pendente_aprovacao') {
         const tempoRestante = dataLimite ? calcularTempoRestante(dataLimite) : '';
-        
-        const prioridade = demanda.prioridade || '';
-        const prioridadeBadge = prioridade ? 
-            `<span class="demanda-priority priority-${prioridade.toLowerCase()}">${prioridade}</span>` : '';
-        
-        const podeAprovar = usuarioLogado && usuarioLogado.role === 'gestor';
-        const eDono = usuarioLogado && usuarioLogado.id === demanda.funcionarioId;
-        // A verificação agora é segura, pois normalizarDadosDemanda garante que é um array
-        const eAtribuido = usuarioLogado && Array.isArray(demanda.atribuidos) && demanda.atribuidos.some(a => a.id === usuarioLogado.id);
-        
-        let atribuidosInfo = '';
-        // A verificação agora é segura, pois normalizarDadosDemanda garante que é um array
-        if (Array.isArray(demanda.atribuidos) && demanda.atribuidos.length > 0) {
-            atribuidosInfo = `<small><strong>Atribuída a:</strong> ${demanda.atribuidos.map(a => a.nome).join(', ')}</small>`;
-        }
-        
-        // Verificar se esta demanda está selecionada
-        const isSelected = selectedOverdueDemands.has(demanda.id);
-        
-        div.innerHTML = `
-            ${prioridadeBadge}
-            <input type="checkbox" class="demanda-checkbox" id="checkbox_${demanda.id}" 
-                ${isSelected ? 'checked' : ''} 
-                onchange="toggleOverdueSelection(${demanda.id})">
-            <div class="demanda-info">
-                <strong>${demanda.nomeFuncionario} - ${demanda.nomeDemanda || demanda.descricao}</strong>
-                <small>Categoria: ${demanda.categoria} | ${statusIcon} ${demanda.status.replace(/_/g, ' ')} | Local: ${demanda.local || 'N/A'} | Data Limite: ${dataLimiteFormatada}</small>
-                ${atribuidosInfo}
-                <small><strong>TAG:</strong> ${demanda.tag || ''}</small>
-                ${demanda.comentarioGestor ? `<br><small><strong>Comentário do Gestor:</strong> ${demanda.comentarioGestor || ''}</small>` : ''}
-                ${infoAdicional}
-                ${rotinaInfo}
-                ${diasFormatados ? `<small><strong>Dias da semana:</strong> ${diasFormatados}</small>` : ''}
-                <div class="time-remaining">ATRASADA HÁ ${tempoRestante}</div>
-            </div>
-            <div class="acoes-demandas">
-                ${(eDono || eAtribuido) && (demanda.status === 'pendente' || demanda.status === 'reprovada') ? `
-                    <button class="success" onclick="abrirModalResolucao(${demanda.id})" title="Resolver Demanda">
-                        <i class="fas fa-tools"></i>
-                    </button>
-                ` : ''}
-                ${podeAprovar && (demanda.status === 'finalizado_pendente_aprovacao') ? `
-                    <button class="success" onclick="aprovarDemanda(${demanda.id}, '${demanda.nomeFuncionario}')" title="Aprovar">
-                        <i class="fas fa-check"></i>
-                    </button>
-                    <button class="danger" onclick="abrirModalReprovar(${demanda.id})" title="Reprovar">
-                        <i class="fas fa-times"></i>
-                    </button>
-                ` : ''}
-                <button class="secondary" onclick="verDetalhes(${demanda.id})" title="Ver Detalhes">
-                    <i class="fas fa-eye"></i>
-                </button>
-                ${podeAprovar ? `
-                    <button class="danger" onclick="apagarDemanda(${demanda.id})" title="Apagar">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                ` : ''}
+        tempoElement = `<div class="time-remaining">${isAtrasado ? 'ATRASADA HÁ ' : 'TEMPO RESTANTE: '}${tempoRestante}</div>`;
+    }
+    
+    const prioridade = demanda.prioridade || '';
+    const prioridadeBadge = prioridade ? 
+        `<span class="demanda-priority priority-${prioridade.toLowerCase()}">${prioridade}</span>` : '';
+    
+    const podeAprovar = usuarioLogado && usuarioLogado.role === 'gestor';
+    const eDono = usuarioLogado && usuarioLogado.id === demanda.funcionarioId;
+    const eAtribuido = usuarioLogado && Array.isArray(demanda.atribuidos) && demanda.atribuidos.some(a => a.id === usuarioLogado.id);
+    
+    let atribuidosInfo = '';
+    if (Array.isArray(demanda.atribuidos) && demanda.atribuidos.length > 0) {
+        atribuidosInfo = `<small><strong>Atribuída a:</strong> ${demanda.atribuidos.map(a => a.nome).join(', ')}</small>`;
+    }
+    
+    // Indicador de comentários
+    let comentariosIndicator = '';
+    if (temComentarios) {
+        comentariosIndicator = `
+            <div class="comentario-indicator" onclick="verDetalhes(${demanda.id})" title="Ver ${totalComentarios} comentário(s)">
+                <i class="fas fa-comment"></i>
+                ${totalComentarios > 1 ? `<span class="badge-count">${totalComentarios}</span>` : ''}
             </div>
         `;
-        
-        return div;
     }
+    
+    div.innerHTML = `
+        ${prioridadeBadge}
+        ${comentariosIndicator}
+        <div class="demanda-info">
+            <strong>${demanda.nomeFuncionario} - ${demanda.nomeDemanda || demanda.descricao}</strong>
+            <small>Categoria: ${demanda.categoria} | ${statusIcon} ${demanda.status.replace(/_/g, ' ')} | Local: ${demanda.local || 'N/A'} | Data Limite: ${dataLimiteFormatada}</small>
+            ${atribuidosInfo}
+            <small><strong>TAG:</strong> ${demanda.tag || ''}</small>
+            ${demanda.comentarioGestor ? `<br><small><strong>Comentário do Gestor:</strong> ${demanda.comentarioGestor || ''}</small>` : ''}
+            ${infoAdicional}
+            ${rotinaInfo}
+            ${diasFormatados ? `<small><strong>Dias da semana:</strong> ${diasFormatados}</small>` : ''}
+            ${tempoElement}
+        </div>
+        <div class="acoes-demandas">
+    ${eDono && (demanda.status === 'pendente' || demanda.status === 'reprovada' || demanda.status === 'atribuida_pendente_aceitacao') ? `
+        <button class="editar" onclick="abrirModalEditarDemanda(${demanda.id})" title="Editar Demanda">
+            <i class="fas fa-edit"></i>
+        </button>
+    ` : ''}
+    ${(eDono || eAtribuido) && (demanda.status === 'pendente' || demanda.status === 'reprovada') ? `
+        <button class="success" onclick="abrirModalResolucao(${demanda.id})" title="Resolver Demanda">
+            <i class="fas fa-tools"></i>
+        </button>
+    ` : ''}
+            ${podeAprovar && (demanda.status === 'finalizado_pendente_aprovacao') ? `
+                <button class="success" onclick="aprovarDemanda(${demanda.id}, '${demanda.nomeFuncionario}')" title="Aprovar">
+                    <i class="fas fa-check"></i>
+                </button>
+                <button class="danger" onclick="abrirModalReprovar(${demanda.id})" title="Reprovar">
+                    <i class="fas fa-times"></i>
+                </button>
+            ` : ''}
+            <button class="secondary" onclick="verDetalhes(${demanda.id})" title="Ver Detalhes">
+                <i class="fas fa-eye"></i>
+            </button>
+            ${podeAprovar ? `
+                <button class="danger" onclick="apagarDemanda(${demanda.id})" title="Apagar">
+                    <i class="fas fa-trash"></i>
+                </button>
+            ` : ''}
+        </div>
+    `;
+    
+    return div;
+}
+    // Criar elemento de demanda atrasada (com checkbox para seleção)
+    // Substitua a função criarElementoDemandaAtrasada existente por esta:
+function criarElementoDemandaAtrasada(demanda, isAtrasado = false) {
+    // Usa a função de normalizar para garantir que os dados estejam corretos
+    demanda = normalizarDadosDemanda(demanda);
 
+    const div = document.createElement('div');
+    
+    const status = demanda.status || 'pendente';
+    const isRotina = demanda.isRotina || false;
+    const dataLimite = demanda.dataLimite;
+    const statusClass = isAtrasado ? 'atrasado' : status;
+    
+    // Verificar se há comentários dos usuários
+    const temComentarios = demanda.comentariosUsuarios && Array.isArray(demanda.comentariosUsuarios) && demanda.comentariosUsuarios.length > 0;
+    const totalComentarios = temComentarios ? demanda.comentariosUsuarios.length : 0;
+    
+    div.className = `demanda-item ${statusClass} ${isRotina ? 'rotina' : ''} ${temComentarios ? 'has-comentarios' : ''}`;
+    
+    let statusIcon = '⏳';
+    switch (status) {
+        case 'aprovada':
+            statusIcon = '✅';
+            break;
+        case 'reprovada':
+        case 'reprovada_pelo_atribuido':
+            statusIcon = '❌';
+            break;
+        case 'finalizado_pendente_aprovacao':
+            statusIcon = '📋';
+            break;
+        case 'atribuida_pendente_aceitacao':
+            statusIcon = '📋';
+            break;
+    }
+    
+    const dataLimiteFormatada = dataLimite ? new Date(dataLimite).toLocaleDateString('pt-BR') : '';
+    const rotinaInfo = isRotina ? `<small><i class="fas fa-redo"></i> Tarefa de rotina</small>` : '';
+    
+    let infoAdicional = '';
+    if (status === 'finalizado_pendente_aprovacao') {
+        infoAdicional = `<br><small><strong>Comentários do Funcionário:</strong> ${demanda.comentarios || ''}</small>`;
+    }
+    
+    if (status === 'reprovada_pelo_atribuido') {
+        infoAdicional = `<br><small><strong>Motivo da Reprovação:</strong> ${demanda.comentarioReprovacaoAtribuicao || ''}</small>`;
+    }
+    
+    if (status === 'reprovada') {
+        infoAdicional = `<br><small><strong>Motivo da Reprovação:</strong> ${demanda.comentarioGestor || ''}</small>`;
+    }
+    
+    let diasFormatados = '';
+    if (demanda.isRotina && Array.isArray(demanda.diasSemana) && demanda.diasSemana.length > 0) {
+        diasFormatados = demanda.diasSemana.map(dia => ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'][dia]).join(', ');
+    }
+    
+    const tempoRestante = dataLimite ? calcularTempoRestante(dataLimite) : '';
+    
+    const prioridade = demanda.prioridade || '';
+    const prioridadeBadge = prioridade ? 
+        `<span class="demanda-priority priority-${prioridade.toLowerCase()}">${prioridade}</span>` : '';
+    
+    const podeAprovar = usuarioLogado && usuarioLogado.role === 'gestor';
+    const eDono = usuarioLogado && usuarioLogado.id === demanda.funcionarioId;
+    const eAtribuido = usuarioLogado && Array.isArray(demanda.atribuidos) && demanda.atribuidos.some(a => a.id === usuarioLogado.id);
+    
+    let atribuidosInfo = '';
+    if (Array.isArray(demanda.atribuidos) && demanda.atribuidos.length > 0) {
+        atribuidosInfo = `<small><strong>Atribuída a:</strong> ${demanda.atribuidos.map(a => a.nome).join(', ')}</small>`;
+    }
+    
+    // Verificar se esta demanda está selecionada
+    const isSelected = selectedOverdueDemands.has(demanda.id);
+    
+    // Indicador de comentários
+    let comentariosIndicator = '';
+    if (temComentarios) {
+        comentariosIndicator = `
+            <div class="comentario-indicator" onclick="verDetalhes(${demanda.id})" title="Ver ${totalComentarios} comentário(s)">
+                <i class="fas fa-comment"></i>
+                ${totalComentarios > 1 ? `<span class="badge-count">${totalComentarios}</span>` : ''}
+            </div>
+        `;
+    }
+    
+    div.innerHTML = `
+        ${prioridadeBadge}
+        ${comentariosIndicator}
+        <input type="checkbox" class="demanda-checkbox" id="checkbox_${demanda.id}" 
+            ${isSelected ? 'checked' : ''} 
+            onchange="toggleOverdueSelection(${demanda.id})">
+        <div class="demanda-info">
+            <strong>${demanda.nomeFuncionario} - ${demanda.nomeDemanda || demanda.descricao}</strong>
+            <small>Categoria: ${demanda.categoria} | ${statusIcon} ${demanda.status.replace(/_/g, ' ')} | Local: ${demanda.local || 'N/A'} | Data Limite: ${dataLimiteFormatada}</small>
+            ${atribuidosInfo}
+            <small><strong>TAG:</strong> ${demanda.tag || ''}</small>
+            ${demanda.comentarioGestor ? `<br><small><strong>Comentário do Gestor:</strong> ${demanda.comentarioGestor || ''}</small>` : ''}
+            ${infoAdicional}
+            ${rotinaInfo}
+            ${diasFormatados ? `<small><strong>Dias da semana:</strong> ${diasFormatados}</small>` : ''}
+            <div class="time-remaining">ATRASADA HÁ ${tempoRestante}</div>
+        </div>
+        <div class="acoes-demandas">
+    ${eDono && (demanda.status === 'pendente' || demanda.status === 'reprovada' || demanda.status === 'atribuida_pendente_aceitacao') ? `
+        <button class="editar" onclick="abrirModalEditarDemanda(${demanda.id})" title="Editar Demanda">
+            <i class="fas fa-edit"></i>
+        </button>
+    ` : ''}
+    ${(eDono || eAtribuido) && (demanda.status === 'pendente' || demanda.status === 'reprovada') ? `
+        <button class="success" onclick="abrirModalResolucao(${demanda.id})" title="Resolver Demanda">
+            <i class="fas fa-tools"></i>
+        </button>
+    ` : ''}
+    ${podeAprovar && (demanda.status === 'finalizado_pendente_aprovacao') ? `
+        <button class="success" onclick="aprovarDemanda(${demanda.id}, '${demanda.nomeFuncionario}')" title="Aprovar">
+            <i class="fas fa-check"></i>
+        </button>
+        <button class="danger" onclick="abrirModalReprovar(${demanda.id})" title="Reprovar">
+            <i class="fas fa-times"></i>
+        </button>
+    ` : ''}
+    <button class="secondary" onclick="verDetalhes(${demanda.id})" title="Ver Detalhes">
+        <i class="fas fa-eye"></i>
+    </button>
+    ${podeAprovar ? `
+        <button class="danger" onclick="apagarDemanda(${demanda.id})" title="Apagar">
+            <i class="fas fa-trash"></i>
+        </button>
+    ` : ''}
+</div>
+        
+    `;
+    
+    return div;
+}
     // Função para alternar seleção de demandas atrasadas
     function toggleOverdueSelection(demandaId) {
         if (selectedOverdueDemands.has(demandaId)) {
@@ -5288,10 +5921,13 @@ function verDetalhes(id) {
         diasSemanaInfo = `<p><strong>Dias da Semana:</strong> ${diasFormatados}</p>`;
     }
     
-    const content = `
-        <div class="demanda-details">
-            <h3>${demandaNormalizada.nomeDemanda || 'Sem Título'}</h3>
-            
+   // Adicione esta linha na função verDetalhes, após o título da demanda:
+const content = `
+    <div class="demanda-details">
+        <h3>
+            ${demandaNormalizada.nomeDemanda || 'Sem Título'}
+            ${temComentarios ? `<span class="comentarios-count">${totalComentarios} comentário(s)</span>` : ''}
+        </h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
                 <div>
                     <p><strong>Funcionário:</strong> ${demandaNormalizada.nomeFuncionario}</p>
@@ -5629,11 +6265,21 @@ function verDetalhes(id) {
     }
 
     // Filtrar dashboard
-    function filtrarDashboard() {
-        filtroFuncionarioAtual = document.getElementById('filtroFuncionario').value;
-        atualizarDashboard();
-        atualizarGraficos();
+ function filtrarDashboard() {
+    filtroFuncionarioAtual = document.getElementById('filtroFuncionario').value;
+    const comentariosFilter = document.getElementById('filtroComentarios')?.value || 'todas';
+    
+    // Se houver filtro de comentários, aplique-o
+    if (comentariosFilter !== 'todas') {
+        // A lógica será aplicada na função getDemandasFiltradas
+        window.filtroComentariosAtual = comentariosFilter;
+    } else {
+        window.filtroComentariosAtual = null;
     }
+    
+    atualizarDashboard();
+    atualizarGraficos();
+}
 
     // Drill down
     function drillDown(type) {
@@ -6878,6 +7524,479 @@ async function importarDemandas() {
             showNotification('success', 'Gráfico Baixado', `O gráfico de ${chartType} foi baixado.`);
         }
     }
+    // Variável global para armazenar a demanda atual para comentários
+let demandaComentarioAtual = null;
+// Adicione estas variáveis globais no início do arquivo
+let demandaEdicaoAtual = null;
+let selectedUsersEditar = [];
+
+// Adicione estas funções após as funções existentes
+
+// Função para abrir modal de edição
+// Função para abrir modal de edição
+function abrirModalEditarDemanda(demandaId) {
+    // Buscar a demanda pelo ID
+    const demanda = todasDemandas.find(d => d.id === demandaId);
+    if (!demanda) {
+        showNotification('error', 'Erro', 'Demanda não encontrada.');
+        return;
+    }
+    
+    // Verificar se o usuário é o criador
+    if (usuarioLogado.id !== demanda.funcionarioId) {
+        showNotification('error', 'Acesso Negado', 'Apenas o criador da demanda pode editá-la.');
+        return;
+    }
+    
+    // Verificar se a demanda pode ser editada (não resolvida, não em análise, não concluída)
+    if (demanda.status === 'finalizado_pendente_aprovacao' || 
+        demanda.status === 'aprovada' || 
+        demanda.status === 'reprovada' || 
+        demanda.status === 'reprovada_pelo_atribuido') {
+        showNotification('error', 'Demanda Não Editável', 'Esta demanda não pode ser editada porque já foi resolvida, está em análise ou foi concluída.');
+        return;
+    }
+    
+    // Armazenar a demanda atual para edição
+    window.demandaEdicaoAtual = demanda;
+    
+    // Preencher o formulário com os dados atuais
+    document.getElementById('editarNomeDemanda').value = demanda.nomeDemanda || '';
+    document.getElementById('editarCategoria').value = demanda.categoria || '';
+    document.getElementById('editarPrioridade').value = demanda.prioridade || '';
+    document.getElementById('editarComplexidade').value = demanda.complexidade || '';
+    document.getElementById('editarLocal').value = demanda.local || '';
+    document.getElementById('editarDescricao').value = demanda.descricao || '';
+    document.getElementById('editarDataLimite').value = demanda.dataLimite || '';
+    document.getElementById('editarRotina').checked = demanda.isRotina || false;
+    
+    // Preencher atribuídos
+    window.selectedUsersEditar = demanda.atribuidos || [];
+    updateSelectedUsersEditar();
+    
+    // Preencher dias da semana se for rotina
+    if (demanda.isRotina && demanda.diasSemana) {
+        document.querySelectorAll('input[name="editarDiaSemana"]').forEach(checkbox => {
+            checkbox.checked = demanda.diasSemana.includes(parseInt(checkbox.value));
+        });
+        document.getElementById('editarDiasSemanaGroup').style.display = 'block';
+    } else {
+        document.getElementById('editarDiasSemanaGroup').style.display = 'none';
+    }
+    
+    // Abrir o modal
+    showModal('editarDemandaModal', `Editar Demanda: ${demanda.nomeDemanda}`);
+    
+    // Inicializar o multi-select após o modal abrir
+    setTimeout(() => {
+        inicializarMultiSelectEditar();
+    }, 100);
+}
+// Funções para o multi-select de edição
+function toggleMultiSelectEditar(id) {
+    const dropdown = document.getElementById(id + 'Dropdown');
+    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+}
+
+function updateSelectedUsersEditar() {
+    const display = document.getElementById('editarAtribuidosDisplay');
+    const selectedUsers = window.selectedUsersEditar || [];
+    
+    if (selectedUsers.length === 0) {
+        display.innerHTML = '<span style="color: #999;">Clique para selecionar funcionários...</span>';
+    } else {
+        display.innerHTML = selectedUsers.map(user => 
+            `<span class="selected-item">${user.nome} <i class="fas fa-times" onclick="removeUserEditar(${user.id})"></i></span>`
+        ).join('');
+    }
+}
+
+function removeUserEditar(userId) {
+    window.selectedUsersEditar = (window.selectedUsersEditar || []).filter(user => user.id !== userId);
+    updateSelectedUsersEditar();
+    
+    // Atualizar o checkbox
+    const checkbox = document.getElementById(`editarUser_${userId}`);
+    if (checkbox) {
+        checkbox.checked = false;
+    }
+}
+
+// Funções para categoria de edição
+function filtrarCategoriasEditar() {
+    const input = document.getElementById('editarCategoria').value.toLowerCase();
+    const dropdown = document.getElementById('editarCategoryDropdown');
+    const options = dropdown.querySelectorAll('.category-option');
+    
+    options.forEach(option => {
+        const text = option.textContent.toLowerCase();
+        if (text.includes(input)) {
+            option.style.display = 'block';
+        } else {
+            option.style.display = 'none';
+        }
+    });
+    
+    if (input) {
+        dropdown.style.display = 'block';
+    }
+}
+
+function toggleCategoryDropdownEditar() {
+    const dropdown = document.getElementById('editarCategoryDropdown');
+    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+}
+
+function selectCategoryEditar(category) {
+    document.getElementById('editarCategoria').value = category;
+    document.getElementById('editarCategoryDropdown').style.display = 'none';
+    
+    if (category === 'Outros') {
+        document.getElementById('editarCustomCategoryInput').style.display = 'block';
+        document.getElementById('editarCustomCategory').focus();
+    } else {
+        document.getElementById('editarCustomCategoryInput').style.display = 'none';
+    }
+}
+
+function toggleRoutineFieldsEditar() {
+    const checkbox = document.getElementById('editarRotina');
+    const diasSemanaGroup = document.getElementById('editarDiasSemanaGroup');
+    
+    if (diasSemanaGroup) {
+        diasSemanaGroup.style.display = checkbox.checked ? 'block' : 'none';
+    }
+}
+
+// Event listener para o formulário de edição
+document.addEventListener('DOMContentLoaded', () => {
+    const editarDemandaForm = document.getElementById('editarDemandaForm');
+    if (editarDemandaForm) {
+        editarDemandaForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await salvarDemandaEditada();
+        });
+    }
+});
+
+// Função para salvar a demanda editada
+// Função para salvar a demanda editada
+async function salvarDemandaEditada() {
+    const demandaEdicaoAtual = window.demandaEdicaoAtual;
+    if (!demandaEdicaoAtual) {
+        showNotification('error', 'Erro', 'Nenhuma demanda selecionada para edição.');
+        return;
+    }
+    
+    const nomeDemanda = document.getElementById('editarNomeDemanda').value;
+    const categoria = document.getElementById('editarCategoria').value;
+    const prioridade = document.getElementById('editarPrioridade').value;
+    const complexidade = document.getElementById('editarComplexidade').value;
+    const descricao = document.getElementById('editarDescricao').value;
+    const local = document.getElementById('editarLocal').value;
+    const isRotina = document.getElementById('editarRotina').checked;
+    
+    if (!nomeDemanda || !categoria || !prioridade || !complexidade || !descricao || !local) {
+        showNotification('error', 'Erro', 'Por favor, preencha todos os campos obrigatórios');
+        return;
+    }
+    
+    let diasSemana = [];
+    if (isRotina) {
+        const checkboxes = document.querySelectorAll('input[name="editarDiaSemana"]:checked');
+        diasSemana = Array.from(checkboxes).map(cb => parseInt(cb.value));
+    }
+    
+    const dadosAtualizados = {
+        nomeDemanda,
+        categoria,
+        prioridade,
+        complexidade,
+        descricao,
+        local,
+        isRotina,
+        diasSemana,
+        atribuidos: window.selectedUsersEditar,
+        dataAtualizacao: new Date().toISOString()
+    };
+    
+    const sucesso = await atualizarDemandaNoServidor(demandaEdicaoAtual.id, dadosAtualizados);
+    
+    if (sucesso) {
+        await carregarDadosDoServidor();
+        showNotification('success', 'Demanda Atualizada', `A demanda "${nomeDemanda}" foi atualizada com sucesso!`);
+        closeModal('editarDemandaModal');
+        renderizarTodasAsAbas();
+        
+        // Notificar atribuídos se houver mudança
+        const atribuidosAtuais = demandaEdicaoAtual.atribuidos || [];
+        const novosAtribuidos = (window.selectedUsersEditar || []).filter(novo => 
+            !atribuidosAtuais.some(atual => atual.id === novo.id)
+        );
+        
+        if (novosAtribuidos.length > 0) {
+            novosAtribuidos.forEach(atribuido => {
+                addUserNotification('info', 'Demanda Atualizada', 
+                    `A demanda "${nomeDemanda}" foi atualizada e você foi adicionado como atribuído.`, 
+                    { tag: demandaEdicaoAtual.tag }
+                );
+                
+                // Enviar email
+                const assunto = encodeURIComponent(`Demanda Atualizada: ${nomeDemanda}`);
+                const corpo = encodeURIComponent(`Prezado(a) ${atribuido.nome},\n\nA demanda "${nomeDemanda}" foi atualizada e você foi adicionado como atribuído.\n\n--- Detalhes da Demanda ---\nNome: ${nomeDemanda}\nDescrição: ${descricao}\nCategoria: ${categoria}\nPrioridade: ${prioridade}\nLocal: ${local}\nData Limite: ${new Date(demandaEdicaoAtual.dataLimite).toLocaleDateString('pt-BR')}\nTAG: ${demandaEdicaoAtual.tag}\n\nPor favor, acesse o sistema para mais detalhes.\n\nAtenciosamente,\nSistema de Gestão de Demandas`);
+                
+                window.open(`mailto:${atribuido.email}?subject=${assunto}&body=${corpo}`, '_blank');
+            });
+        }
+    }
+    
+    // Limpar variáveis globais
+    window.demandaEdicaoAtual = null;
+    window.selectedUsersEditar = [];
+}
+// Inicializar o multi-select de edição quando o modal abrir
+function inicializarMultiSelectEditar() {
+    const dropdown = document.getElementById('editarAtribuidosDropdown');
+    if (!dropdown) return;
+    
+    dropdown.innerHTML = '';
+    
+    usuarios.filter(u => u.role === 'funcionario' || u.role === 'gestor').forEach(usuario => {
+        const option = document.createElement('div');
+        option.className = 'multi-select-option';
+        
+        const icon = usuario.role === 'gestor' ? '<i class="fas fa-user-shield"></i> ' : '<i class="fas fa-user"></i> ';
+        const label = usuario.role === 'gestor' ? `${usuario.nome} (Gestor)` : usuario.nome;
+        
+        option.innerHTML = `
+            <input type="checkbox" id="editarUser_${usuario.id}" value="${usuario.id}">
+            <label for="editarUser_${usuario.id}">${icon}${label}</label>
+        `;
+        
+        option.addEventListener('click', function(e) {
+            if (e.target.tagName !== 'INPUT') {
+                const checkbox = this.querySelector('input[type="checkbox"]');
+                checkbox.checked = !checkbox.checked;
+            }
+            
+            if (checkbox.checked) {
+                const usuario = usuarios.find(u => u.id == checkbox.value);
+                if (usuario && !selectedUsersEditar.find(u => u.id === usuario.id)) {
+                    selectedUsersEditar.push(usuario);
+                }
+            } else {
+                selectedUsersEditar = selectedUsersEditar.filter(u => u.id != checkbox.value);
+            }
+            
+            updateSelectedUsersEditar();
+        });
+        
+        dropdown.appendChild(option);
+    });
+}
+// Função para abrir o modal de comentários
+function abrirModalComentario(demandaId) {
+    const demanda = todasDemandas.find(d => d.id === demandaId);
+    if (!demanda) return;
+    
+    // Verificar se o usuário é o criador ou um atribuído
+    const eDono = usuarioLogado && usuarioLogado.id === demanda.funcionarioId;
+    const eAtribuido = usuarioLogado && Array.isArray(demanda.atribuidos) && demanda.atribuidos.some(a => a.id === usuarioLogado.id);
+    
+    if (!eDono && !eAtribuido) {
+        showNotification('error', 'Acesso Negado', 'Apenas o criador ou atribuídos podem adicionar comentários.');
+        return;
+    }
+    
+    demandaComentarioAtual = demanda;
+    document.getElementById('comentarioForm').reset();
+    showModal('comentarioModal', `Adicionar Comentário - ${demanda.nomeDemanda}`);
+}
+
+// Adicionar event listener para o formulário de comentários
+document.addEventListener('DOMContentLoaded', () => {
+    const comentarioForm = document.getElementById('comentarioForm');
+    if (comentarioForm) {
+        comentarioForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await salvarComentario();
+        });
+    }
+});
+
+// Função para salvar o comentário
+async function salvarComentario() {
+    if (!demandaComentarioAtual) return;
+    
+    const comentarioText = document.getElementById('comentarioText').value;
+    
+    if (!comentarioText) {
+        showNotification('warning', 'Campo Obrigatório', 'Por favor, digite um comentário.');
+        return;
+    }
+    
+    // Inicializar array de comentários se não existir
+    if (!demandaComentarioAtual.comentariosUsuarios) {
+        demandaComentarioAtual.comentariosUsuarios = [];
+    }
+    
+    // Adicionar novo comentário
+    const novoComentario = {
+        id: Date.now(),
+        texto: comentarioText,
+        autor: usuarioLogado.nome,
+        autorId: usuarioLogado.id,
+        data: new Date().toISOString()
+    };
+    
+    demandaComentarioAtual.comentariosUsuarios.push(novoComentario);
+    
+    // Salvar no servidor
+    const dadosAtualizados = {
+        comentariosUsuarios: demandaComentarioAtual.comentariosUsuarios
+    };
+    
+    const sucesso = await atualizarDemandaNoServidor(demandaComentarioAtual.id, dadosAtualizados);
+    
+    if (sucesso) {
+        showNotification('success', 'Comentário Adicionado', 'Seu comentário foi adicionado com sucesso.');
+        closeModal('comentarioModal');
+        
+        // Se o modal de detalhes estiver aberto, atualizá-lo
+        const detailModal = document.getElementById('detailModal');
+        if (detailModal && detailModal.style.display === 'block') {
+            verDetalhes(demandaComentarioAtual.id);
+        }
+    }
+    
+    demandaComentarioAtual = null;
+}
+
+// Modificar a função verDetalhes para incluir os comentários
+function verDetalhes(id) {
+    const demanda = todasDemandas.find(d => d.id === id);
+    if (!demanda) return;
+    
+    // Normaliza os dados antes de exibir (criando uma nova constante)
+    const demandaNormalizada = normalizarDadosDemanda(demanda);
+    
+    // Verificar se o usuário pode adicionar comentários
+    const eDono = usuarioLogado && usuarioLogado.id === demandaNormalizada.funcionarioId;
+    const eAtribuido = usuarioLogado && Array.isArray(demandaNormalizada.atribuidos) && demandaNormalizada.atribuidos.some(a => a.id === usuarioLogado.id);
+    const podeComentar = eDono || eAtribuido;
+    
+    let tempoInfo = '';
+    if (demandaNormalizada.status === 'aprovada' && demandaNormalizada.dataConclusao) {
+        tempoInfo = `<p><strong>Desempenho de Tempo:</strong> ${calcularDesempenhoTempo(demandaNormalizada.dataCriacao, demandaNormalizada.dataConclusao, demandaNormalizada.dataLimite)}</p>`;
+    }
+    
+    let atribuidosInfo = '';
+    if (Array.isArray(demandaNormalizada.atribuidos) && demandaNormalizada.atribuidos.length > 0) {
+        atribuidosInfo = `<p><strong>Atribuída a:</strong> ${demandaNormalizada.atribuidos.map(a => a.nome).join(', ')}</p>`;
+    }
+    
+    // Adicionar informações sobre dias da semana se for rotina
+    let diasSemanaInfo = '';
+    if (demandaNormalizada.isRotina && Array.isArray(demandaNormalizada.diasSemana) && demandaNormalizada.diasSemana.length > 0) {
+        const nomesDias = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+        const diasFormatados = demandaNormalizada.diasSemana.map(dia => nomesDias[dia]).join(', ');
+        diasSemanaInfo = `<p><strong>Dias da Semana:</strong> ${diasFormatados}</p>`;
+    }
+    
+    // Renderizar comentários dos usuários
+    let comentariosUsuariosHTML = '';
+    if (demandaNormalizada.comentariosUsuarios && demandaNormalizada.comentariosUsuarios.length > 0) {
+        comentariosUsuariosHTML = `
+            <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                <h4 style="margin-top: 0; color: #1976d2;">💬 Comentários</h4>
+                ${demandaNormalizada.comentariosUsuarios.map(comentario => `
+                    <div style="background: white; padding: 10px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid #1976d2;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <strong>${comentario.autor}</strong>
+                            <small>${formatDate(comentario.data)}</small>
+                        </div>
+                        <p style="margin: 0; white-space: pre-wrap; line-height: 1.5;">${comentario.texto}</p>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    // Botão para adicionar comentário
+    let botaoComentario = '';
+    if (podeComentar && demandaNormalizada.status !== 'aprovada') {
+        botaoComentario = `
+            <div style="text-align: center; margin-top: 15px;">
+                <button class="info" onclick="abrirModalComentario(${demandaNormalizada.id})">
+                    <i class="fas fa-comment"></i> Adicionar Comentário
+                </button>
+            </div>
+        `;
+    }
+    
+    const content = `
+        <div class="demanda-details">
+            <h3>${demandaNormalizada.nomeDemanda || 'Sem Título'}</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <div>
+                    <p><strong>Funcionário:</strong> ${demandaNormalizada.nomeFuncionario}</p>
+                    <p><strong>Categoria:</strong> ${demandaNormalizada.categoria}</p>
+                    <p><strong>Local:</strong> ${demandaNormalizada.local || 'N/A'}</p>
+                    <p><strong>Prioridade:</strong> <span style="color: ${demandaNormalizada.prioridade === 'Importante' ? '#e74c3c' : demandaNormalizada.prioridade === 'Média' ? '#f39c12' : '#27ae60'}">${demandaNormalizada.prioridade}</span></p>
+                    <p><strong>Complexidade:</strong> ${demandaNormalizada.complexidade}</p>
+                </div>
+                <div>
+                    <p><strong>Status:</strong> ${demandaNormalizada.status.replace(/_/g, ' ')}</p>
+                    <p><strong>Data Criação:</strong> ${new Date(demandaNormalizada.dataCriacao).toLocaleDateString('pt-BR')}</p>
+                    <p><strong>Data Limite:</strong> ${new Date(demandaNormalizada.dataLimite).toLocaleDateString('pt-BR')}</p>
+                    ${demandaNormalizada.dataConclusao ? `<p><strong>Data Conclusão:</strong> ${new Date(demandaNormalizada.dataConclusao).toLocaleDateString('pt-BR')}</p>` : ''}
+                    ${demandaNormalizada.isRotina ? `<p><strong>Tipo:</strong> <span style="color: #9b59b6;">Tarefa de Rotina</span></p>` : ''}
+                </div>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                <h4 style="margin-top: 0; color: #2c3e50;">📝 Descrição da Demanda</h4>
+                <p style="white-space: pre-wrap; line-height: 1.5;">${demandaNormalizada.descricao || 'Nenhuma descrição informada.'}</p>
+            </div>
+            
+            ${diasSemanaInfo}
+            ${tempoInfo}
+            ${atribuidosInfo}
+            
+            ${comentariosUsuariosHTML}
+            
+            ${demandaNormalizada.comentarios ? `
+                <div style="background: #e8f5e8; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                    <h4 style="margin-top: 0; color: #27ae60;">💬 Comentários do Funcionário</h4>
+                    <p style="white-space: pre-wrap; line-height: 1.5;">${demandaNormalizada.comentarios}</p>
+                </div>
+            ` : ''}
+            
+            ${demandaNormalizada.comentarioGestor ? `
+                <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                    <h4 style="margin-top: 0; color: #856404;">👔 Comentário do Gestor</h4>
+                    <p style="white-space: pre-wrap; line-height: 1.5;">${demandaNormalizada.comentarioGestor}</p>
+                </div>
+            ` : ''}
+            
+            ${demandaNormalizada.comentarioReprovacaoAtribuicao ? `
+                <div style="background: #f8d7da; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                    <h4 style="margin-top: 0; color: #721c24;">❌ Motivo da Reprovação</h4>
+                    <p style="white-space: pre-wrap; line-height: 1.5;">${demandaNormalizada.comentarioReprovacaoAtribuicao}</p>
+                </div>
+            ` : ''}
+            
+            <div style="background: #e9ecef; padding: 10px; border-radius: 5px; text-align: center;">
+                <small><strong>TAG:</strong> ${demandaNormalizada.tag}</small>
+            </div>
+            
+            ${botaoComentario}
+        </div>
+    `;
+    
+    showModal('detailModal', 'Detalhes da Demanda', content);
+}
 </script>
 
 </body>
